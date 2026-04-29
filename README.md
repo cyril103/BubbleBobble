@@ -1,0 +1,56 @@
+# Bubble Dungeon
+
+Prototype 2D en Python et Pygame inspire des arcade-platformers fixes.
+
+## Lancer le jeu
+
+```bash
+python main.py
+```
+
+## Controles
+
+- `Entree` : lancer la partie depuis l'ecran titre
+- `A / D` ou `← / →` : bouger
+- `Espace / W / ↑` : sauter
+- `F / Ctrl` : tirer une bulle
+- `Entree / R` : recommencer apres fin de campagne / game over
+- `Esc` : quitter
+
+## Ce qui est deja en place
+
+- ecran titre puis phase `READY`
+- 3 niveaux JSON
+- transition verticale automatique entre les niveaux
+- joueur, saut, gravite, plateformes
+- ennemis patrouilleurs
+- bulles, capture, elimination
+- bulles qui restent bloquees aux bords/plafond si elles arrivent lentement
+- bulles qui eclatent sur impact rapide contre un bord ou une plateforme
+- collisions et repulsion legere entre bulles
+- reaction en chaine entre bulles proches quand une bulle eclate
+- joueur capable d'eclater les bulles en sautant vers le haut
+- ennemis captures qui montent dans leur bulle et interagissent avec les autres bulles
+- score, vies, invulnerabilite de respawn
+- bonus collectables
+- HUD arcade avec police pixel
+
+## Comportement actuel des bulles
+
+- la bulle part tres vite horizontalement
+- elle parcourt une bonne distance, grossit puis freine brutalement
+- ensuite elle monte
+- un ennemi ne peut etre capture que tant que la bulle garde une vitesse horizontale suffisante
+- les bulles sont actuellement plus grandes qu'au debut du prototype
+- une bulle lente se bloque contre le plafond ou les bords au lieu de sortir de l'ecran
+- une bulle rapide eclate si elle percute un bord ou une plateforme
+- les bulles proches se repoussent legerement
+- si une bulle eclate, les bulles tres proches eclatent aussi
+- le joueur peut eclater une bulle en la touchant pendant la montee d'un saut
+- une bulle contenant un ennemi monte, repousse les autres bulles et peut eclater par reaction en chaine
+
+## Comportement actuel sur perte de vie
+
+- le niveau ne recommence pas entierement
+- le joueur joue une petite animation de mort
+- il reapparait ensuite au spawn du niveau avec une courte invulnerabilite
