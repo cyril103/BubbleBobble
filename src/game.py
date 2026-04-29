@@ -617,17 +617,29 @@ class Game:
 
         pygame.display.flip()
 
+    def run_frame(self) -> None:
+        dt = self.clock.tick(FPS) / 1000.0
+        self.handle_events()
+        self.update(dt)
+        self.draw()
+
     def run(self, max_frames: int | None = None) -> None:
         frames = 0
 
         while self.running:
-            dt = self.clock.tick(FPS) / 1000.0
-            self.handle_events()
-            self.update(dt)
-            self.draw()
+            self.run_frame()
 
             frames += 1
             if max_frames is not None and frames >= max_frames:
                 self.running = False
+
+        pygame.quit()
+
+    async def run_async(self) -> None:
+        while self.running:
+            self.run_frame()
+            import asyncio
+
+            await asyncio.sleep(0)
 
         pygame.quit()

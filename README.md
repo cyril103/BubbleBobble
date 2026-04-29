@@ -2,11 +2,41 @@
 
 Prototype 2D en Python et Pygame inspire des arcade-platformers fixes.
 
-## Lancer le jeu
+## Lancer le jeu en local
 
 ```bash
 python main.py
 ```
+
+## Generer une version web jouable
+
+Le projet peut etre compile en page web avec [Pygbag](https://pygame-web.github.io/). Le code contient une boucle `async` compatible navigateur, tout en gardant le lancement local via `python main.py`.
+
+Prerequis recommande : `uv` installe sur la machine.
+
+```bash
+scripts/build_web.sh
+```
+
+La version web est generee dans :
+
+```text
+build/web/
+```
+
+Pour tester localement :
+
+```bash
+scripts/serve_web.sh 8010
+```
+
+Puis ouvrir :
+
+```text
+http://127.0.0.1:8010/
+```
+
+Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour lancer la partie.
 
 ## Controles
 
