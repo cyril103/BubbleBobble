@@ -1,11 +1,13 @@
+import asyncio
+
 from src.game import Game
 
 
-def main() -> int:
+async def main() -> int:
     game = Game()
-    game.run()
+    await game.run_async()
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    asyncio.run(main())
