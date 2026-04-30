@@ -2,6 +2,27 @@
 
 Prototype 2D en Python et Pygame inspire des arcade-platformers fixes.
 
+## Resolution et assets
+
+Le jeu utilise une resolution logique retro de `224x256`.
+
+La fenetre est agrandie par `WINDOW_SCALE` dans `src/settings.py` pour garder des pixels lisibles sans changer la physique ni les niveaux.
+
+Les sprites actifs sont charges depuis :
+
+```text
+assets/sprites/sprites.png
+```
+
+Cette feuille contient notamment :
+
+- joueur, marche et mort
+- bulles tirees
+- bulles eclatees
+- ennemis normaux
+- ennemis captures par variante
+- items / bonus
+
 ## Lancer le jeu en local
 
 ```bash
@@ -30,6 +51,7 @@ Controles de l'editeur :
 - `1` : mode plateformes
 - `2` : mode joueur
 - `3` : mode ennemis
+- `4` a `9` : selectionner rapidement un type d'ennemi
 - `Suppr` / `Retour arriere` : supprimer l'element selectionne
 - `Fleches` : deplacer l'element selectionne sur la grille
 - `Shift + Fleches` : ajustement fin pixel par pixel
@@ -37,8 +59,17 @@ Controles de l'editeur :
 - glisser une plateforme selectionnee : la deplacer
 - glisser sa poignee en bas a droite : la redimensionner
 - clic gauche en mode joueur : placer le spawn du joueur
-- clic gauche en mode ennemis : ajouter ou selectionner un ennemi
+- clic sur la palette du bas : selectionner le type d'ennemi a placer
+- clic gauche en mode ennemis : ajouter l'ennemi selectionne ou selectionner un ennemi existant
 - clic droit sur une plateforme ou un ennemi : supprimer
+
+Les ennemis sont sauvegardes dans les JSON au format :
+
+```json
+[x, y, variant]
+```
+
+Les anciens niveaux au format `[x, y]` restent lisibles ; la variante est alors deduite de l'ordre dans la liste.
 
 ## Generer une version web jouable
 
@@ -85,7 +116,9 @@ Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour 
 - 3 niveaux JSON
 - transition verticale automatique entre les niveaux
 - joueur, saut, gravite, plateformes
+- saut plus tolerant avec `jump buffer` et `coyote time`
 - ennemis patrouilleurs
+- selection de variantes d'ennemis dans l'editeur
 - bulles, capture, elimination
 - bulles qui restent bloquees aux bords/plafond si elles arrivent lentement
 - bulles qui eclatent sur impact rapide contre un bord ou une plateforme
@@ -95,6 +128,8 @@ Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour 
 - ennemis captures qui montent dans leur bulle et interagissent avec les autres bulles
 - score, vies, invulnerabilite de respawn
 - bonus collectables
+- animation de mort du joueur depuis `sprites.png`
+- animations des ennemis captures par variante
 - HUD arcade avec police pixel
 
 ## Comportement actuel des bulles

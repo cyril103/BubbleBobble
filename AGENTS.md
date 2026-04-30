@@ -48,6 +48,7 @@ Structure actuelle :
 ```text
 bubble_dungeon/
 ├── main.py
+├── editor.py
 ├── README.md
 ├── AGENTS.md
 ├── assets/
@@ -72,11 +73,15 @@ bubble_dungeon/
 ## Fonctionnalites deja implementees
 
 - fenetre Pygame et boucle de jeu
+- resolution logique retro `224x256`
+- fenetre agrandie par `WINDOW_SCALE` dans `src/settings.py`
 - classe `Game`
 - chargement des niveaux JSON
 - joueur avec deplacement, saut, gravite et collisions simples
+- saut plus tolerant avec `jump buffer` et `coyote time`
 - plateformes fixes
 - ennemis qui patrouillent
+- ennemis avec variantes sauvegardees dans les niveaux
 - tir de bulles
 - capture des ennemis dans les bulles
 - elimination des ennemis captures
@@ -89,7 +94,11 @@ bubble_dungeon/
 - transition verticale automatique entre niveaux
 - fin de campagne et game over
 - HUD arcade avec police `assets/fonts/emulogic.ttf`
-- sprites charges depuis la spritesheet transparente dans `assets/sprites`
+- sprites charges depuis `assets/sprites/sprites.png`
+- animation de mort du joueur depuis la spritesheet
+- animations de bulles, eclatement, items et ennemis captures depuis la spritesheet
+- editeur de niveaux lanceable avec `python editor.py` ou `python main.py --editor`
+- palette d'ennemis dans l'editeur pour choisir la variante a placer
 - bulles avec dash horizontal rapide, freinage brutal, croissance puis montee
 - capture d'ennemi seulement pendant la phase de deplacement horizontal rapide
 - bulles agrandies avec hitbox coherente avec le visuel
@@ -103,10 +112,14 @@ bubble_dungeon/
 ## Comportements importants a conserver
 
 - le jeu se lance avec `python main.py`
+- l'editeur se lance avec `python editor.py`
+- la logique de jeu reste en `224x256`, la taille de fenetre depend de `WINDOW_SCALE`
 - pendant `READY`, les entites tombent sous gravite, mais le joueur ne peut pas bouger
 - quand le joueur perd une vie, le niveau ne redemarre pas entierement
 - le joueur reapparait au point de depart du niveau avec invulnerabilite
-- une petite animation de mort est jouee avant le respawn
+- l'animation de mort du joueur issue de `sprites.png` est jouee avant le respawn
+- les niveaux acceptent les ennemis au format `[x, y, variant]`
+- les anciens spawns ennemis `[x, y]` restent compatibles
 - quand le dernier ennemi meurt, il y a un delai avant la transition pour laisser le temps de ramasser le dernier bonus
 - le passage au niveau suivant est automatique, sans appui touche
 - une bulle ne capture pas un ennemi pendant sa montee, seulement si sa vitesse horizontale est encore suffisante
@@ -121,10 +134,12 @@ bubble_dungeon/
 ## Fichiers centraux
 
 - `main.py` : point d'entree
+- `editor.py` : point d'entree de l'editeur
 - `src/game.py` : boucle principale, etats, transitions, gameplay
 - `src/settings.py` : constantes globales
 - `src/assets.py` : chargement de la spritesheet, police et surfaces
 - `src/level.py` : chargement / decouverte des niveaux
+- `src/editor.py` : edition des niveaux, grille, palette ennemis, sauvegarde JSON
 - `src/entities/` : joueur, ennemi, bulle, bonus, particules
 - `src/ui/` : HUD, overlays, ecran titre
 
@@ -133,6 +148,7 @@ bubble_dungeon/
 - ajouter plus tard un point d'attraction des bulles dans les niveaux
 - ajouter des power-ups jouables a partir des icones deja presentes
 - enrichir les niveaux et leur rythme
+- continuer a verifier les decoupes exactes dans `assets/sprites/sprites.png` quand une animation semble decalee
 - ajouter sons et musique originaux
 - ameliorer les animations
 - ajouter un vrai menu / ecran de selection / attract mode
