@@ -12,6 +12,7 @@ from src.settings import (
     BACKGROUND_COLOR,
     BUBBLE_CHAIN_POP_MARGIN,
     BUBBLE_REPEL_STRENGTH,
+    COLLECTABLE_SIZE,
     FPS,
     HEIGHT,
     LEVELS_DIR,
@@ -25,6 +26,8 @@ from src.settings import (
     STARTING_LIVES,
     TITLE,
     WIDTH,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
 )
 from src.states import GameState
 from src.systems.collisions import bubble_hits_enemy, player_hits_enemy, player_stomps_trapped_enemy
@@ -36,7 +39,8 @@ class Game:
     def __init__(self) -> None:
         pygame.init()
         pygame.font.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        self.scene_surface = pygame.Surface((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
         self.assets = AssetManager()
@@ -71,6 +75,14 @@ class Game:
         self.reset_level()
         self.state = GameState.TITLE
 
+    def present_scene(self) -> None:
+        if self.screen.get_size() == self.scene_surface.get_size():
+            self.screen.blit(self.scene_surface, (0, 0))
+        else:
+            scaled_scene = pygame.transform.scale(self.scene_surface, self.screen.get_size())
+            self.screen.blit(scaled_scene, (0, 0))
+        pygame.display.flip()
+
     def start_game(self) -> None:
         self.load_level(0, keep_score=False, keep_lives=False)
 
@@ -78,7 +90,7 @@ class Game:
         self.player = Player(*self.level.player_spawn)
         self.bubbles = []
         self.collectables = []
-        self.enemies = [Enemy(x, y, index) for index, (x, y) in enumerate(self.level.enemy_spawns)]
+        self.enemies = [Enemy(x, y, variant) for x, y, variant in self.level.enemy_spawns]
         self.particles = []
         self._resolve_spawn_collisions()
         self.spawn_invulnerability_timer = SPAWN_INVULNERABILITY_DURATION
@@ -138,15 +150,15 @@ class Game:
         self.load_level(0, keep_score=False, keep_lives=False)
 
     def spawn_bubble(self) -> None:
-        bubble_x = self.player.rect.centerx + self.player.facing * 26
-        bubble_y = self.player.rect.centery - 10
+        bubble_x = self.player.rect.centerx + self.player.facing * 10
+        bubble_y = self.player.rect.centery - 3
         self.bubbles.append(Bubble(bubble_x, bubble_y, self.player.facing))
 
     def spawn_pop(self, center: tuple[int, int]) -> None:
         self.particles.append(Particle(pygame.Vector2(center)))
 
     def spawn_player_death_effect(self, center: tuple[int, int]) -> None:
-        offsets = ((0, 0), (-18, -8), (18, -8), (-10, 16), (10, 16))
+        offsets = ((0, 0), (-7, -4), (7, -4), (-5, 7), (5, 7))
         for offset_x, offset_y in offsets:
             self.spawn_pop((center[0] + offset_x, center[1] + offset_y))
 
@@ -158,7 +170,7 @@ class Game:
         self.spawn_invulnerability_timer = SPAWN_INVULNERABILITY_DURATION
 
     def spawn_collectable(self, center: tuple[int, int], variant: int, launch_direction: int) -> None:
-        size = 30
+        size = COLLECTABLE_SIZE
         score = 400 + (variant % 6) * 100
         self.collectables.append(
             Collectable(center[0] - size / 2, center[1] - size / 2, variant, score, launch_direction=launch_direction)
@@ -355,7 +367,7 @@ class Game:
 
         next_level = Level.from_file(self.level_paths[next_level_index])
         next_player = Player(*next_level.player_spawn)
-        next_enemies = [Enemy(x, y, index) for index, (x, y) in enumerate(next_level.enemy_spawns)]
+        next_enemies = [Enemy(x, y, variant) for x, y, variant in next_level.enemy_spawns]
         next_surface = pygame.Surface((WIDTH, HEIGHT))
         self.render_scene_to(
             next_surface,
@@ -397,7 +409,6 @@ class Game:
 
     def handle_player_hit(self) -> None:
         self.lives -= 1
-        self.spawn_player_death_effect(self.player.rect.center)
         self.bubbles = []
         self.death_timer = PLAYER_DEATH_DURATION
         if self.lives <= 0:
@@ -546,34 +557,34 @@ class Game:
 
     def draw_transition(self) -> None:
         if self.transition_from_surface is None or self.transition_to_surface is None:
-            self.screen.fill(BACKGROUND_COLOR)
+            self.scene_surface.fill(BACKGROUND_COLOR)
             return
 
         progress = 1.0 - (self.transition_timer / LEVEL_TRANSITION_DURATION)
         offset = round(progress * HEIGHT)
-        self.screen.fill(BACKGROUND_COLOR)
-        self.screen.blit(self.transition_from_surface, (0, -offset))
-        self.screen.blit(self.transition_to_surface, (0, HEIGHT - offset))
+        self.scene_surface.fill(BACKGROUND_COLOR)
+        self.scene_surface.blit(self.transition_from_surface, (0, -offset))
+        self.scene_surface.blit(self.transition_to_surface, (0, HEIGHT - offset))
 
     def draw(self) -> None:
         if self.state == GameState.TITLE:
-            self.screen.fill(BACKGROUND_COLOR)
+            self.scene_surface.fill(BACKGROUND_COLOR)
             draw_title_screen(
-                self.screen,
+                self.scene_surface,
                 self.assets.title_font,
                 self.assets.overlay_font,
                 blink_on=(pygame.time.get_ticks() // 450) % 2 == 0,
             )
-            pygame.display.flip()
+            self.present_scene()
             return
 
         if self.state == GameState.TRANSITION:
             self.draw_transition()
-            pygame.display.flip()
+            self.present_scene()
             return
 
         self.render_scene_to(
-            self.screen,
+            self.scene_surface,
             self.level,
             self.player,
             self.bubbles,
@@ -589,10 +600,12 @@ class Game:
         )
 
         if self.state == GameState.READY:
-            draw_ready_overlay(self.screen, self.assets.title_font, self.assets.overlay_font, self.level.name)
+            draw_ready_overlay(self.scene_surface, self.assets.title_font, self.assets.overlay_font, self.level.name)
         elif self.state == GameState.DYING:
+            death_progress = 1.0 - (self.death_timer / PLAYER_DEATH_DURATION)
+            self.player.draw_death(self.scene_surface, self.camera, self.assets, death_progress)
             draw_overlay(
-                self.screen,
+                self.scene_surface,
                 self.assets.title_font,
                 self.assets.overlay_font,
                 "OOPS!",
@@ -600,7 +613,7 @@ class Game:
             )
         elif self.state == GameState.CAMPAIGN_COMPLETE:
             draw_overlay(
-                self.screen,
+                self.scene_surface,
                 self.assets.title_font,
                 self.assets.overlay_font,
                 "Campagne Complete",
@@ -608,14 +621,14 @@ class Game:
             )
         elif self.state == GameState.GAME_OVER:
             draw_overlay(
-                self.screen,
+                self.scene_surface,
                 self.assets.title_font,
                 self.assets.overlay_font,
                 "Game Over",
                 [f"Score final: {self.score}", "Appuie sur Entree ou R pour recommencer"],
             )
 
-        pygame.display.flip()
+        self.present_scene()
 
     def run_frame(self) -> None:
         dt = self.clock.tick(FPS) / 1000.0

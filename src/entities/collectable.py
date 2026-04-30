@@ -1,4 +1,3 @@
-import math
 from dataclasses import dataclass
 
 import pygame
@@ -53,15 +52,16 @@ class Collectable:
                 self.y = float(self.rect.y)
                 self.velocity_y = 0.0
                 self.velocity_x *= 0.92
+                if abs(self.velocity_x) < 2.0:
+                    self.velocity_x = 0.0
                 self.on_ground = True
                 break
 
         return self.age < self.lifetime
 
     def draw(self, surface: pygame.Surface, camera, assets) -> None:
-        bob_offset = round(3 * math.sin(self.age * 4.0)) if self.on_ground else 0
-        screen_rect = camera.apply_rect(self.rect).move(0, bob_offset)
+        screen_rect = camera.apply_rect(self.rect)
         sprite = assets.get_collectable_frame(self.variant)
-        if assets.draw_scaled(surface, sprite, screen_rect, scale_x=1.15, scale_y=1.15):
+        if assets.draw_scaled(surface, sprite, screen_rect):
             return
         pygame.draw.rect(surface, (255, 220, 120), screen_rect, border_radius=8)

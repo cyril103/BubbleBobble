@@ -1,6 +1,14 @@
 import pygame
 
-from src.settings import PLAYER_COLOR, PLAYER_HEIGHT, PLAYER_JUMP_VELOCITY, PLAYER_SPEED, PLAYER_WIDTH
+from src.settings import (
+    PLAYER_COLOR,
+    PLAYER_COYOTE_TIME,
+    PLAYER_HEIGHT,
+    PLAYER_JUMP_BUFFER_DURATION,
+    PLAYER_JUMP_VELOCITY,
+    PLAYER_SPEED,
+    PLAYER_WIDTH,
+)
 from src.systems.input import get_horizontal_intent
 from src.systems.physics import move_entity, settle_entity
 
@@ -14,6 +22,8 @@ class Player:
         self.velocity_y = 0.0
         self.on_ground = False
         self.facing = 1
+        self.jump_buffer_timer = 0.0
+        self.coyote_timer = 0.0
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
         horizontal = get_horizontal_intent(keys)
@@ -23,15 +33,35 @@ class Player:
             self.facing = horizontal
 
     def jump(self) -> None:
-        if self.on_ground:
-            self.velocity_y = PLAYER_JUMP_VELOCITY
-            self.on_ground = False
+        self.jump_buffer_timer = PLAYER_JUMP_BUFFER_DURATION
+
+    def _consume_jump_if_possible(self) -> None:
+        if self.jump_buffer_timer <= 0 or self.coyote_timer <= 0:
+            return
+
+        self.velocity_y = PLAYER_JUMP_VELOCITY
+        self.on_ground = False
+        self.jump_buffer_timer = 0.0
+        self.coyote_timer = 0.0
 
     def update(self, dt: float, platforms: list[pygame.Rect]) -> None:
+        self.jump_buffer_timer = max(0.0, self.jump_buffer_timer - dt)
+        if self.on_ground:
+            self.coyote_timer = PLAYER_COYOTE_TIME
+        else:
+            self.coyote_timer = max(0.0, self.coyote_timer - dt)
+
+        self._consume_jump_if_possible()
         move_entity(self, dt, platforms)
+
+        if self.on_ground:
+            self.coyote_timer = PLAYER_COYOTE_TIME
+            self._consume_jump_if_possible()
 
     def settle(self, dt: float, platforms: list[pygame.Rect]) -> None:
         self.velocity_x = 0.0
+        self.jump_buffer_timer = 0.0
+        self.coyote_timer = PLAYER_COYOTE_TIME if self.on_ground else 0.0
         settle_entity(self, dt, platforms)
 
     def draw(self, surface: pygame.Surface, camera, assets, invulnerable: bool = False) -> None:
@@ -40,6 +70,13 @@ class Player:
 
         screen_rect = camera.apply_rect(self.rect)
         sprite = assets.get_player_frame(self.facing, moving=abs(self.velocity_x) > 0.0)
-        if assets.draw_scaled(surface, sprite, screen_rect, scale_x=1.55, scale_y=1.35):
+        if assets.draw_scaled(surface, sprite, screen_rect):
+            return
+        pygame.draw.rect(surface, PLAYER_COLOR, screen_rect, border_radius=8)
+
+    def draw_death(self, surface: pygame.Surface, camera, assets, progress: float) -> None:
+        screen_rect = camera.apply_rect(self.rect)
+        sprite = assets.get_player_death_frame(progress, self.facing)
+        if assets.draw_scaled(surface, sprite, screen_rect):
             return
         pygame.draw.rect(surface, PLAYER_COLOR, screen_rect, border_radius=8)

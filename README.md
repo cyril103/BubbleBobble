@@ -8,6 +8,38 @@ Prototype 2D en Python et Pygame inspire des arcade-platformers fixes.
 python main.py
 ```
 
+## Editer les niveaux
+
+Un editeur Pygame est disponible pour modifier directement les fichiers JSON du dossier `levels/`.
+
+```bash
+python editor.py
+```
+
+Il peut aussi etre lance avec :
+
+```bash
+python main.py --editor
+```
+
+Controles de l'editeur :
+
+- `Ctrl+S` ou `F5` : sauvegarder le niveau courant
+- `Ctrl+R` : recharger le niveau courant et annuler les changements non sauvegardes
+- `[` / `]` ou `Page Up` / `Page Down` : changer de niveau
+- `1` : mode plateformes
+- `2` : mode joueur
+- `3` : mode ennemis
+- `Suppr` / `Retour arriere` : supprimer l'element selectionne
+- `Fleches` : deplacer l'element selectionne sur la grille
+- `Shift + Fleches` : ajustement fin pixel par pixel
+- clic gauche en mode plateformes : creer ou selectionner une plateforme
+- glisser une plateforme selectionnee : la deplacer
+- glisser sa poignee en bas a droite : la redimensionner
+- clic gauche en mode joueur : placer le spawn du joueur
+- clic gauche en mode ennemis : ajouter ou selectionner un ennemi
+- clic droit sur une plateforme ou un ennemi : supprimer
+
 ## Generer une version web jouable
 
 Le projet peut etre compile en page web avec [Pygbag](https://pygame-web.github.io/). Le code contient une boucle `async` compatible navigateur, tout en gardant le lancement local via `python main.py`.

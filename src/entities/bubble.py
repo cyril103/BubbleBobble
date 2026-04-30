@@ -148,6 +148,6 @@ class Bubble:
     def draw(self, surface: pygame.Surface, camera, assets) -> None:
         screen_rect = camera.apply_rect(self.rect)
         sprite = assets.get_bubble_frame(self.growth_progress)
-        if assets.draw_scaled(surface, sprite, screen_rect, scale_x=1.15, scale_y=1.15):
+        if assets.draw_scaled(surface, sprite, screen_rect):
             return
         pygame.draw.ellipse(surface, BUBBLE_COLOR, screen_rect, width=3)

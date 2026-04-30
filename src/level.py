@@ -10,13 +10,17 @@ class Level:
     name: str
     player_spawn: tuple[int, int]
     platforms: list[pygame.Rect]
-    enemy_spawns: list[tuple[int, int]]
+    enemy_spawns: list[tuple[int, int, int]]
 
     @classmethod
     def from_file(cls, path: Path) -> "Level":
         data = json.loads(path.read_text(encoding="utf-8"))
         platforms = [pygame.Rect(*platform) for platform in data["platforms"]]
-        enemy_spawns = [tuple(spawn) for spawn in data["enemy_spawns"]]
+        enemy_spawns: list[tuple[int, int, int]] = []
+        for index, spawn in enumerate(data["enemy_spawns"]):
+            x, y = spawn[:2]
+            variant = spawn[2] if len(spawn) >= 3 else index
+            enemy_spawns.append((x, y, variant))
         return cls(
             name=data["name"],
             player_spawn=tuple(data["player_spawn"]),

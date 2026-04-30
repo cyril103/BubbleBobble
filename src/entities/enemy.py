@@ -108,8 +108,7 @@ class Enemy:
         if self.trapped:
             screen_rect = screen_rect.move(0, round(math.sin(pygame.time.get_ticks() / 140 + self.variant) * 4))
         sprite = assets.get_enemy_frame(self.variant, self.trapped)
-        scale = 1.95 if self.trapped else 1.75
-        if assets.draw_scaled(surface, sprite, screen_rect, scale_x=scale, scale_y=scale):
+        if assets.draw_scaled(surface, sprite, screen_rect):
             return
         color = ENEMY_TRAPPED_COLOR if self.trapped else ENEMY_COLOR
         pygame.draw.rect(surface, color, screen_rect, border_radius=10)

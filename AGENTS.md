@@ -8,12 +8,7 @@ Le jeu doit être développé progressivement en vibe-coding avec Codex dans VSC
 
 Nom provisoire du jeu : `Bubble Dungeon`
 
-Le jeu ne doit pas copier directement :
-- les sprites originaux de Bubble Bobble ;
-- les niveaux originaux ;
-- les musiques ou sons originaux ;
-- les personnages exacts ;
-- le nom commercial Bubble Bobble.
+
 
 L’objectif est de créer un jeu similaire dans l’esprit :
 - plateforme 2D fixe ;

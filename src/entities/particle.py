@@ -17,9 +17,9 @@ class Particle:
 
     def draw(self, surface: pygame.Surface, camera, assets) -> None:
         sprite = assets.get_pop_frame(self.age, self.lifetime)
-        rect = pygame.Rect(0, 0, 52, 52)
+        rect = pygame.Rect(0, 0, 24, 24)
         rect.center = (round(self.center.x), round(self.center.y))
         screen_rect = camera.apply_rect(rect)
-        if assets.draw_scaled(surface, sprite, screen_rect, scale_x=1.4, scale_y=1.4):
+        if assets.draw_scaled(surface, sprite, screen_rect):
             return
-        pygame.draw.circle(surface, (180, 220, 255), screen_rect.center, 18, width=2)
+        pygame.draw.circle(surface, (180, 220, 255), screen_rect.center, 8, width=2)
