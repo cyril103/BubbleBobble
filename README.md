@@ -8,20 +8,28 @@ Le jeu utilise une resolution logique retro de `224x256`.
 
 La fenetre est agrandie par `WINDOW_SCALE` dans `src/settings.py` pour garder des pixels lisibles sans changer la physique ni les niveaux.
 
-Les sprites actifs sont charges depuis :
+Les sprites actifs viennent de plusieurs sources :
 
 ```text
 assets/sprites/sprites.png
+assets/sprites/player_animations/
+assets/sprites/bobbles_animations/
+assets/sprites/zen_chan/
+assets/sprites/mighta/
 ```
 
-Cette feuille contient notamment :
+`sprites.png` reste utilisee comme source historique et fallback pour plusieurs elements :
 
-- joueur, marche et mort
-- bulles tirees
-- bulles eclatees
-- ennemis normaux
-- ennemis captures par variante
 - items / bonus
+- variantes ennemies qui n'ont pas encore de dossier dedie
+- sprites de fallback si un dossier d'animation manque
+
+Les dossiers dedies contiennent les animations actives suivantes :
+
+- `player_animations/` : idle, marche, saut, chute, attaque bulle et mort du joueur
+- `bobbles_animations/` : tir de bulle, bulle idle et explosion de bulle
+- `zen_chan/` : marche, capture et mort de Zen-Chan
+- `mighta/` : marche, capture et mort de Mighta
 
 ## Lancer le jeu en local
 
@@ -120,16 +128,21 @@ Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour 
 - ennemis patrouilleurs
 - selection de variantes d'ennemis dans l'editeur
 - bulles, capture, elimination
+- Zen-Chan sur la variante ennemie `0`
+- Mighta sur la variante ennemie `1`
 - bulles qui restent bloquees aux bords/plafond si elles arrivent lentement
 - bulles qui eclatent sur impact rapide contre un bord ou une plateforme
 - collisions et repulsion legere entre bulles
 - reaction en chaine entre bulles proches quand une bulle eclate
 - joueur capable d'eclater les bulles en sautant vers le haut
 - ennemis captures qui montent dans leur bulle et interagissent avec les autres bulles
+- ennemis captures qui jouent une animation de mort quand leur bulle eclate
+- ennemis morts projetes en arc parabolique, avec animation de rotation en boucle
+- bonus d'ennemi cree seulement quand l'ennemi mort touche le sol ou une plateforme
 - score, vies, invulnerabilite de respawn
 - bonus collectables
-- animation de mort du joueur depuis `sprites.png`
-- animations des ennemis captures par variante
+- animation de mort du joueur depuis `player_animations/`
+- animations d'ennemis capturees depuis les dossiers dedies quand disponibles
 - HUD arcade avec police pixel
 
 ## Comportement actuel des bulles
@@ -145,9 +158,13 @@ Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour 
 - si une bulle eclate, les bulles tres proches eclatent aussi
 - le joueur peut eclater une bulle en la touchant pendant la montee d'un saut
 - une bulle contenant un ennemi monte, repousse les autres bulles et peut eclater par reaction en chaine
+- quand une bulle contenant un ennemi eclate, l'ennemi ne disparait pas instantanement
+- l'ennemi mort part en arc, rebondit contre les bords de l'ecran si besoin, puis genere son bonus a l'atterrissage
 
 ## Comportement actuel sur perte de vie
 
 - le niveau ne recommence pas entierement
-- le joueur joue une petite animation de mort
+- le joueur joue une animation de mort de 2 secondes
+- si le joueur meurt en l'air, il continue a tomber pendant l'animation de mort
+- aucun overlay sombre ne masque l'animation de mort
 - il reapparait ensuite au spawn du niveau avec une courte invulnerabilite
