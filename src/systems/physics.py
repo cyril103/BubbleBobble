@@ -12,7 +12,9 @@ def _apply_vertical_physics(entity, dt: float, platforms: list[pygame.Rect]) -> 
     support_platform = None
 
     for platform in platforms:
-        if entity.rect.colliderect(platform) and previous_bottom <= platform.top:
+        overlaps_x = entity.rect.right > platform.left and entity.rect.left < platform.right
+        lands_on_platform = previous_bottom <= platform.top and entity.rect.bottom >= platform.top
+        if overlaps_x and lands_on_platform:
             entity.rect.bottom = platform.top
             entity.y = float(entity.rect.y)
             entity.velocity_y = 0.0
@@ -25,8 +27,8 @@ def _apply_vertical_physics(entity, dt: float, platforms: list[pygame.Rect]) -> 
     return support_platform
 
 
-def move_entity(entity, dt: float, platforms: list[pygame.Rect]) -> pygame.Rect | None:
-    entity.velocity_y += GRAVITY * dt
+def move_entity(entity, dt: float, platforms: list[pygame.Rect], gravity: float = GRAVITY) -> pygame.Rect | None:
+    entity.velocity_y += gravity * dt
 
     entity.x += entity.velocity_x * dt
     entity.rect.x = round(entity.x)
@@ -36,6 +38,6 @@ def move_entity(entity, dt: float, platforms: list[pygame.Rect]) -> pygame.Rect 
     return _apply_vertical_physics(entity, dt, platforms)
 
 
-def settle_entity(entity, dt: float, platforms: list[pygame.Rect]) -> pygame.Rect | None:
-    entity.velocity_y += GRAVITY * dt
+def settle_entity(entity, dt: float, platforms: list[pygame.Rect], gravity: float = GRAVITY) -> pygame.Rect | None:
+    entity.velocity_y += gravity * dt
     return _apply_vertical_physics(entity, dt, platforms)

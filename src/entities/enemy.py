@@ -6,6 +6,10 @@ from src.settings import (
     BUBBLE_RADIUS,
     BUBBLE_RISE_SPEED,
     ENEMY_COLOR,
+    ENEMY_DEATH_ANIMATION_DURATION,
+    ENEMY_DEATH_BOUNCE_VELOCITY,
+    ENEMY_DEATH_GRAVITY,
+    ENEMY_DEATH_HORIZONTAL_VELOCITY,
     ENEMY_HEIGHT,
     ENEMY_SPEED,
     ENEMY_TRAPPED_COLOR,
@@ -30,6 +34,10 @@ class Enemy:
         self.trap_timer = 0.0
         self.alive = True
         self.variant = variant
+        self.dying = False
+        self.death_age = 0.0
+        self.collectable_ready = False
+        self.collectable_launch_origin_x = float(self.rect.centerx)
 
     @property
     def center(self) -> pygame.Vector2:
@@ -67,8 +75,35 @@ class Enemy:
         self.velocity_x = ENEMY_SPEED
         self.velocity_y = 0.0
 
+    def start_death(self, launch_origin_x: float | None = None) -> None:
+        self.trapped = False
+        self.dying = True
+        self.death_age = 0.0
+        self.collectable_ready = False
+        self.collectable_launch_origin_x = (
+            float(self.rect.centerx) if launch_origin_x is None else float(launch_origin_x)
+        )
+        launch_direction = 1 if self.collectable_launch_origin_x <= self.rect.centerx else -1
+        self.velocity_x = ENEMY_DEATH_HORIZONTAL_VELOCITY * launch_direction
+        self.velocity_y = ENEMY_DEATH_BOUNCE_VELOCITY
+
+    def finish_death(self) -> None:
+        self.alive = False
+        self.dying = False
+        self.collectable_ready = False
+
     def update(self, dt: float, platforms: list[pygame.Rect]) -> None:
         if not self.alive:
+            return
+
+        if self.dying:
+            self.death_age += dt
+            support_platform = move_entity(self, dt, platforms, gravity=ENEMY_DEATH_GRAVITY)
+            if self.rect.left <= 0 or self.rect.right >= WIDTH:
+                self.rect.x = max(0, min(self.rect.x, WIDTH - self.rect.width))
+                self.x = float(self.rect.x)
+                self.velocity_x *= -1
+            self.collectable_ready = support_platform is not None
             return
 
         if self.trapped:
@@ -99,16 +134,27 @@ class Enemy:
     def settle(self, dt: float, platforms: list[pygame.Rect]) -> None:
         if not self.alive:
             return
-        if self.trapped:
+        if self.trapped or self.dying:
             return
         settle_entity(self, dt, platforms)
 
     def draw(self, surface: pygame.Surface, camera, assets) -> None:
         screen_rect = camera.apply_rect(self.rect)
+        if self.dying:
+            sprite = assets.get_enemy_death_frame(self.variant, self.death_age, self.facing)
+            if assets.draw_centered(surface, sprite, screen_rect):
+                return
+            pygame.draw.rect(surface, ENEMY_COLOR, screen_rect, border_radius=10)
+            return
+
         if self.trapped:
             screen_rect = screen_rect.move(0, round(math.sin(pygame.time.get_ticks() / 140 + self.variant) * 4))
-        sprite = assets.get_enemy_frame(self.variant, self.trapped)
+        sprite = assets.get_enemy_frame(self.variant, self.trapped, self.facing)
         if assets.draw_scaled(surface, sprite, screen_rect):
             return
         color = ENEMY_TRAPPED_COLOR if self.trapped else ENEMY_COLOR
         pygame.draw.rect(surface, color, screen_rect, border_radius=10)
+
+    @property
+    def facing(self) -> int:
+        return 1 if self.velocity_x > 0 else -1

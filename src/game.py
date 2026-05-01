@@ -153,6 +153,7 @@ class Game:
         bubble_x = self.player.rect.centerx + self.player.facing * 10
         bubble_y = self.player.rect.centery - 3
         self.bubbles.append(Bubble(bubble_x, bubble_y, self.player.facing))
+        self.player.play_attack_animation()
 
     def spawn_pop(self, center: tuple[int, int]) -> None:
         self.particles.append(Particle(pygame.Vector2(center)))
@@ -177,12 +178,11 @@ class Game:
         )
 
     def defeat_enemy(self, enemy: Enemy, launch_origin_x: float | None = None) -> None:
-        enemy.alive = False
+        if enemy.dying:
+            return
         self.score += 250
         self.spawn_pop(enemy.rect.center)
-        origin_x = self.player.rect.centerx if launch_origin_x is None else launch_origin_x
-        launch_direction = 1 if origin_x <= enemy.rect.centerx else -1
-        self.spawn_collectable(enemy.rect.center, enemy.variant, launch_direction)
+        enemy.start_death(self.player.rect.centerx if launch_origin_x is None else launch_origin_x)
         self.message = "Ennemi elimine."
 
     def handle_events(self) -> None:
@@ -329,11 +329,18 @@ class Game:
         for enemy in self.enemies:
             enemy.update(dt, self.level.platforms)
 
-            if enemy.alive and player_stomps_trapped_enemy(self.player, enemy):
+            if enemy.collectable_ready:
+                launch_direction = 1 if enemy.collectable_launch_origin_x <= enemy.rect.centerx else -1
+                self.spawn_collectable(enemy.rect.center, enemy.variant, launch_direction)
+                enemy.finish_death()
+                continue
+
+            if enemy.alive and not enemy.dying and player_stomps_trapped_enemy(self.player, enemy):
                 self.defeat_enemy(enemy)
             elif (
                 self.spawn_invulnerability_timer <= 0
                 and enemy.alive
+                and not enemy.dying
                 and not enemy.trapped
                 and player_hits_enemy(self.player, enemy)
             ):
@@ -415,12 +422,10 @@ class Game:
             self.lives = 0
             self.state = GameState.DYING
             self.pending_post_death_state = GameState.GAME_OVER
-            self.message = "Plus de vies."
             return
 
         self.state = GameState.DYING
         self.pending_post_death_state = GameState.PLAYING
-        self.message = "Vie perdue. Respawn..."
 
     def update_collectables(self, dt: float) -> None:
         active_collectables: list[Collectable] = []
@@ -441,6 +446,7 @@ class Game:
 
     def update_dying(self, dt: float) -> None:
         self.death_timer = max(0.0, self.death_timer - dt)
+        self.player.settle(dt, self.level.platforms)
         self.update_particles(dt)
         if self.death_timer > 0:
             return
@@ -604,13 +610,6 @@ class Game:
         elif self.state == GameState.DYING:
             death_progress = 1.0 - (self.death_timer / PLAYER_DEATH_DURATION)
             self.player.draw_death(self.scene_surface, self.camera, self.assets, death_progress)
-            draw_overlay(
-                self.scene_surface,
-                self.assets.title_font,
-                self.assets.overlay_font,
-                "OOPS!",
-                [f"Vies restantes: {self.lives}"],
-            )
         elif self.state == GameState.CAMPAIGN_COMPLETE:
             draw_overlay(
                 self.scene_surface,
