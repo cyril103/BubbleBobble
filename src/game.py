@@ -28,6 +28,7 @@ from src.settings import (
     WIDTH,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
+    scale_px,
 )
 from src.states import GameState
 from src.systems.collisions import bubble_hits_enemy, player_hits_enemy, player_stomps_trapped_enemy
@@ -112,7 +113,7 @@ class Game:
                 occupied_rects.append(enemy.rect)
                 continue
 
-            for candidate_x in range(24, WIDTH - enemy.rect.width, 56):
+            for candidate_x in range(scale_px(24), WIDTH - enemy.rect.width, scale_px(56)):
                 candidate_rect = enemy.rect.copy()
                 candidate_rect.x = candidate_x
                 if any(candidate_rect.colliderect(rect) for rect in occupied_rects):
@@ -150,8 +151,8 @@ class Game:
         self.load_level(0, keep_score=False, keep_lives=False)
 
     def spawn_bubble(self) -> None:
-        bubble_x = self.player.rect.centerx + self.player.facing * 10
-        bubble_y = self.player.rect.centery - 3
+        bubble_x = self.player.rect.centerx + self.player.facing * scale_px(10)
+        bubble_y = self.player.rect.centery - scale_px(3)
         self.bubbles.append(Bubble(bubble_x, bubble_y, self.player.facing))
         self.player.play_attack_animation()
 
@@ -159,7 +160,13 @@ class Game:
         self.particles.append(Particle(pygame.Vector2(center)))
 
     def spawn_player_death_effect(self, center: tuple[int, int]) -> None:
-        offsets = ((0, 0), (-7, -4), (7, -4), (-5, 7), (5, 7))
+        offsets = (
+            (0, 0),
+            (-scale_px(7), -scale_px(4)),
+            (scale_px(7), -scale_px(4)),
+            (-scale_px(5), scale_px(7)),
+            (scale_px(5), scale_px(7)),
+        )
         for offset_x, offset_y in offsets:
             self.spawn_pop((center[0] + offset_x, center[1] + offset_y))
 

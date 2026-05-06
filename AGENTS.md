@@ -72,8 +72,8 @@ bubble_dungeon/
 ## Fonctionnalites deja implementees
 
 - fenetre Pygame et boucle de jeu
-- resolution logique retro `224x256`
-- fenetre agrandie par `WINDOW_SCALE` dans `src/settings.py`
+- resolution native retro `672x768` (3x la base historique `224x256`)
+- fenetre a l'echelle `WINDOW_SCALE` dans `src/settings.py` (valeur par defaut `1`)
 - classe `Game`
 - chargement des niveaux JSON
 - joueur avec deplacement, saut, gravite et collisions simples
@@ -119,7 +119,7 @@ bubble_dungeon/
 
 - le jeu se lance avec `python main.py`
 - l'editeur se lance avec `python editor.py`
-- la logique de jeu reste en `224x256`, la taille de fenetre depend de `WINDOW_SCALE`
+- la logique de jeu native reste en `672x768`; `NATIVE_RESOLUTION_SCALE` convertit la base historique `224x256`, et la taille de fenetre depend de `WINDOW_SCALE`
 - pendant `READY`, les entites tombent sous gravite, mais le joueur ne peut pas bouger
 - quand le joueur perd une vie, le niveau ne redemarre pas entierement
 - le joueur reapparait au point de depart du niveau avec invulnerabilite

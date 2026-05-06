@@ -4,9 +4,9 @@ Prototype 2D en Python et Pygame inspire des arcade-platformers fixes.
 
 ## Resolution et assets
 
-Le jeu utilise une resolution logique retro de `224x256`.
+Le jeu utilise une resolution native retro de `672x768`, soit 3 fois la base historique `224x256`.
 
-La fenetre est agrandie par `WINDOW_SCALE` dans `src/settings.py` pour garder des pixels lisibles sans changer la physique ni les niveaux.
+`NATIVE_RESOLUTION_SCALE` dans `src/settings.py` centralise cette mise a l'echelle. `WINDOW_SCALE` vaut `1` par defaut afin de conserver une fenetre raisonnable de `672x768`.
 
 Les sprites actifs viennent de plusieurs sources :
 

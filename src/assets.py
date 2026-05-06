@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pygame
 
-from src.settings import ASSETS_DIR, ENEMY_DEATH_FRAME_DURATION, ENEMY_HEIGHT, PLAYER_HEIGHT
+from src.settings import ASSETS_DIR, ENEMY_DEATH_FRAME_DURATION, ENEMY_HEIGHT, PLAYER_HEIGHT, scale_px
 
 
 SPRITE_LAYOUT = {
@@ -131,9 +131,9 @@ TRAPPED_VARIANTS = (
 class AssetManager:
     def __init__(self) -> None:
         self.font_path = ASSETS_DIR / "fonts" / "emulogic.ttf"
-        self.hud_font = self._load_font(5, fallback_size=8)
-        self.title_font = self._load_font(10, fallback_size=16)
-        self.overlay_font = self._load_font(6, fallback_size=9)
+        self.hud_font = self._load_font(scale_px(5), fallback_size=scale_px(8))
+        self.title_font = self._load_font(scale_px(10), fallback_size=scale_px(16))
+        self.overlay_font = self._load_font(scale_px(6), fallback_size=scale_px(9))
 
         self.sprite_sheet_path = self._find_sprite_sheet()
         self.sprite_sheet = self._load_sprite_sheet(self.sprite_sheet_path)
