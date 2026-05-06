@@ -29,7 +29,6 @@ Utiliser uniquement :
 - Pygame
 - Aucun moteur externe
 - Aucun framework lourd
-- Pas d’assets propriétaires
 
 Le projet doit pouvoir se lancer avec :
 
