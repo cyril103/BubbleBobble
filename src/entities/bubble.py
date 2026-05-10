@@ -13,6 +13,7 @@ from src.settings import (
     HEIGHT,
     WIDTH,
 )
+from src.systems.vector_field import VectorField
 
 
 class Bubble:
@@ -65,52 +66,14 @@ class Bubble:
 
         return hit_bounds
 
-    def _block_against_wall(self, wall: pygame.Rect, previous_rect: pygame.Rect) -> None:
-        if previous_rect.right <= wall.left:
-            self.rect.right = wall.left
-            self.center.x = float(self.rect.centerx)
-            self.velocity_x = 0.0
-            self.blocked_horizontally = True
-        elif previous_rect.left >= wall.right:
-            self.rect.left = wall.right
-            self.center.x = float(self.rect.centerx)
-            self.velocity_x = 0.0
-            self.blocked_horizontally = True
-        elif previous_rect.bottom <= wall.top:
-            self.rect.bottom = wall.top
-            self.center.y = float(self.rect.centery)
-            self.velocity_y = 0.0
-        elif previous_rect.top >= wall.bottom:
-            self.rect.top = wall.bottom
-            self.center.y = float(self.rect.centery)
-            self.velocity_y = 0.0
-            self.blocked_at_top = True
-
-    def _handle_wall_collisions(self, walls: list[pygame.Rect], previous_rect: pygame.Rect) -> bool:
-        hit_wall = False
-
-        for wall in walls:
-            if not self.rect.colliderect(wall):
-                continue
-
-            hit_wall = True
-            self._block_against_wall(wall, previous_rect)
-            self._sync_rect()
-
-        if hit_wall:
-            self._clamp_to_scene()
-
-        return hit_wall
-
     def nudge(self, offset: pygame.Vector2) -> None:
         self.center += offset
         self._sync_rect()
         self._clamp_to_scene()
 
-    def update(self, dt: float, walls: list[pygame.Rect] | None = None) -> bool:
+    def update(self, dt: float, vector_field: VectorField | None = None) -> bool:
         self.age += dt
         self.growth_progress = min(1.0, self.age / BUBBLE_BRAKE_DURATION)
-        previous_rect = self.rect.copy()
 
         # La bulle garde une bonne vitesse au debut, puis freine fort sur la fin.
         horizontal_factor = max(0.0, 1.0 - self.growth_progress**4)
@@ -124,7 +87,13 @@ class Bubble:
         self.current_radius = BUBBLE_START_RADIUS + (BUBBLE_RADIUS - BUBBLE_START_RADIUS) * eased_growth
 
         if self.growth_progress >= 1.0:
-            self.velocity_y = 0.0 if self.blocked_at_top else -BUBBLE_RISE_SPEED
+            idle_direction = vector_field.direction_at(self.center) if vector_field is not None else pygame.Vector2(0, -1)
+            if self.blocked_at_top and idle_direction.y < 0:
+                idle_direction.y = 0.0
+            idle_velocity = idle_direction * BUBBLE_RISE_SPEED
+            self.velocity_x = idle_velocity.x
+            self.velocity_y = idle_velocity.y
+            self.center.x += self.velocity_x * dt
             self.center.y += self.velocity_y * dt
         else:
             self.velocity_y = 0.0
@@ -133,10 +102,6 @@ class Bubble:
         self._sync_rect()
         hit_bounds = self._clamp_to_scene()
         if hit_bounds and impact_speed >= BUBBLE_POP_IMPACT_SPEED:
-            return False
-
-        hit_wall = self._handle_wall_collisions(walls or [], previous_rect)
-        if hit_wall and impact_speed >= BUBBLE_POP_IMPACT_SPEED:
             return False
 
         expired = self.age >= BUBBLE_LIFETIME

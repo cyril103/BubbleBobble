@@ -20,6 +20,7 @@ from src.settings import (
     WIDTH,
 )
 from src.systems.physics import move_entity, settle_entity
+from src.systems.vector_field import VectorField
 
 
 class Enemy:
@@ -92,7 +93,7 @@ class Enemy:
         self.dying = False
         self.collectable_ready = False
 
-    def update(self, dt: float, platforms: list[pygame.Rect]) -> None:
+    def update(self, dt: float, platforms: list[pygame.Rect], vector_field: VectorField | None = None) -> None:
         if not self.alive:
             return
 
@@ -108,11 +109,17 @@ class Enemy:
 
         if self.trapped:
             self.trap_timer -= dt
-            if self.rect.centery > BUBBLE_RADIUS:
-                self.velocity_y = -BUBBLE_RISE_SPEED
-                self._set_center(self.center + pygame.Vector2(0, self.velocity_y * dt))
+            idle_direction = vector_field.direction_at(self.center) if vector_field is not None else pygame.Vector2(0, -1)
+            if self.rect.centery <= BUBBLE_RADIUS and idle_direction.y < 0:
+                idle_direction.y = 0.0
+            if idle_direction.length_squared() > 0:
+                idle_velocity = idle_direction.normalize() * BUBBLE_RISE_SPEED
+                self.velocity_x = idle_velocity.x
+                self.velocity_y = idle_velocity.y
+                self._set_center(self.center + idle_velocity * dt)
                 self._clamp_trapped_bubble()
             else:
+                self.velocity_x = 0.0
                 self.velocity_y = 0.0
             if self.trap_timer <= 0:
                 self.release()

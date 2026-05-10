@@ -56,6 +56,7 @@ Controles de l'editeur :
 - `1` : mode plateformes
 - `2` : mode joueur
 - `3` : mode ennemis
+- `V` : mode champ de vecteurs des bulles
 - `4` a `9` : selectionner rapidement un type d'ennemi
 - `Suppr` / `Retour arriere` : supprimer l'element selectionne
 - `Fleches` : deplacer l'element selectionne sur la grille
@@ -66,6 +67,8 @@ Controles de l'editeur :
 - clic gauche en mode joueur : placer le spawn du joueur
 - clic sur la palette du bas : selectionner le type d'ennemi a placer
 - clic gauche en mode ennemis : ajouter l'ennemi selectionne ou selectionner un ennemi existant
+- clic gauche + glisser en mode champ de vecteurs : orienter le vecteur de la case `32x32`
+- clic droit en mode champ de vecteurs : remettre le vecteur de la case vers le haut
 - clic droit sur une plateforme ou un ennemi : supprimer
 
 Les ennemis sont sauvegardes dans les JSON au format :
@@ -128,7 +131,7 @@ Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour 
 - Zen-Chan sur la variante ennemie `0`
 - Mighta sur la variante ennemie `1`
 - bulles qui restent bloquees aux bords/plafond si elles arrivent lentement
-- bulles qui eclatent sur impact rapide contre un bord ou une plateforme
+- bulles qui ignorent les plateformes et eclatent seulement sur impact rapide contre une limite de l'ecran
 - collisions et repulsion legere entre bulles
 - reaction en chaine entre bulles proches quand une bulle eclate
 - joueur capable d'eclater les bulles en sautant vers le haut
@@ -150,11 +153,13 @@ Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour 
 - un ennemi ne peut etre capture que tant que la bulle garde une vitesse horizontale suffisante
 - les bulles sont actuellement plus grandes qu'au debut du prototype
 - une bulle lente se bloque contre le plafond ou les bords au lieu de sortir de l'ecran
-- une bulle rapide eclate si elle percute un bord ou une plateforme
+- une bulle ignore les plateformes et ne collisionne plus qu'avec les limites de l'ecran
+- une bulle rapide eclate si elle percute une limite de l'ecran
 - les bulles proches se repoussent legerement
 - si une bulle eclate, les bulles tres proches eclatent aussi
 - le joueur peut eclater une bulle en la touchant pendant la montee d'un saut
-- une bulle contenant un ennemi monte, repousse les autres bulles et peut eclater par reaction en chaine
+- une bulle idle suit un champ de vecteurs de cases `32x32`, actuellement initialise vers le haut sur toute la surface
+- une bulle contenant un ennemi suit aussi ce champ, repousse les autres bulles et peut eclater par reaction en chaine
 - quand une bulle contenant un ennemi eclate, l'ennemi ne disparait pas instantanement
 - l'ennemi mort part en arc, rebondit contre les bords de l'ecran si besoin, puis genere son bonus a l'atterrissage
 

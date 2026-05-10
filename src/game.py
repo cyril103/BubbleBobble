@@ -217,7 +217,7 @@ class Game:
         pop_origins: list[tuple[pygame.Vector2, float]] = []
 
         for bubble in self.bubbles:
-            was_active = bubble.update(dt, self.level.platforms)
+            was_active = bubble.update(dt, self.level.vector_field)
             if not was_active:
                 self.spawn_pop(bubble.rect.center)
                 pop_origins.append((bubble.center.copy(), bubble.current_radius))
@@ -333,7 +333,7 @@ class Game:
 
     def update_enemies(self, dt: float) -> None:
         for enemy in self.enemies:
-            enemy.update(dt, self.level.platforms)
+            enemy.update(dt, self.level.platforms, self.level.vector_field)
 
             if enemy.collectable_ready:
                 launch_direction = 1 if enemy.collectable_launch_origin_x <= enemy.rect.centerx else -1

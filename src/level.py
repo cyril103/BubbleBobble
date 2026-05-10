@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pygame
 
+from src.systems.vector_field import VectorField
+
 
 @dataclass
 class Level:
@@ -11,6 +13,7 @@ class Level:
     player_spawn: tuple[int, int]
     platforms: list[pygame.Rect]
     enemy_spawns: list[tuple[int, int, int]]
+    vector_field: VectorField
 
     @classmethod
     def from_file(cls, path: Path) -> "Level":
@@ -26,6 +29,7 @@ class Level:
             player_spawn=tuple(data["player_spawn"][:2]),
             platforms=platforms,
             enemy_spawns=enemy_spawns,
+            vector_field=VectorField.from_json_data(data.get("vector_field")),
         )
 
 

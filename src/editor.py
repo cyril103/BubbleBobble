@@ -20,8 +20,10 @@ from src.settings import (
     PLATFORM_COLOR,
     PLAYER_HEIGHT,
     PLAYER_WIDTH,
+    VECTOR_FIELD_CELL_SIZE,
     WIDTH,
 )
+from src.systems.vector_field import VectorField
 
 
 GRID_SIZE = 24
@@ -40,6 +42,9 @@ PLAYER_MARKER_COLOR = (245, 196, 87)
 ENEMY_MARKER_COLOR = (221, 95, 98)
 PANEL_COLOR = (18, 21, 31)
 SAVE_FLASH_COLOR = (88, 210, 150)
+VECTOR_GRID_COLOR = (45, 90, 100)
+VECTOR_ARROW_COLOR = (80, 220, 235)
+VECTOR_SELECTED_COLOR = (255, 240, 150)
 
 
 @dataclass
@@ -49,6 +54,7 @@ class EditableLevel:
     player_spawn: tuple[int, int]
     platforms: list[pygame.Rect]
     enemy_spawns: list[tuple[int, int, int]]
+    vector_field: VectorField
 
     @classmethod
     def from_path(cls, path: Path) -> "EditableLevel":
@@ -59,6 +65,7 @@ class EditableLevel:
             player_spawn=level.player_spawn,
             platforms=[platform.copy() for platform in level.platforms],
             enemy_spawns=list(level.enemy_spawns),
+            vector_field=level.vector_field,
         )
 
     def to_json_data(self) -> dict[str, object]:
@@ -69,6 +76,7 @@ class EditableLevel:
             "player_spawn": list(self.player_spawn),
             "platforms": [[rect.x, rect.y, rect.width, rect.height] for rect in self.platforms],
             "enemy_spawns": [[x, y, variant] for x, y, variant in self.enemy_spawns],
+            "vector_field": self.vector_field.to_json_data(),
         }
 
     def save(self) -> None:
@@ -100,13 +108,14 @@ class LevelEditor:
         self.mode = "platform"
         self.selected_platform_index: int | None = None
         self.selected_enemy_index: int | None = None
+        self.selected_vector_cell: tuple[int, int] | None = None
         self.drag_action: str | None = None
         self.drag_offset = pygame.Vector2()
         self.drag_start = pygame.Vector2()
         self.drag_origin_rect: pygame.Rect | None = None
         self.save_flash_timer = 0.0
         self.selected_enemy_variant = 0
-        self.message = "1 Plateformes  2 Joueur  3 Ennemis"
+        self.message = "1 Plateformes  2 Joueur  3 Ennemis  V Vecteurs"
 
     def run(self) -> int:
         while self.running:
@@ -150,13 +159,14 @@ class LevelEditor:
     def clear_selection(self) -> None:
         self.selected_platform_index = None
         self.selected_enemy_index = None
+        self.selected_vector_cell = None
         self.drag_action = None
         self.drag_origin_rect = None
 
     def set_mode(self, mode: str) -> None:
         self.mode = mode
         self.clear_selection()
-        names = {"platform": "Plateformes", "player": "Joueur", "enemy": "Ennemis"}
+        names = {"platform": "Plateformes", "player": "Joueur", "enemy": "Ennemis", "vector": "Vecteurs"}
         self.message = f"Mode: {names[mode]}"
 
     def handle_events(self) -> None:
@@ -185,6 +195,8 @@ class LevelEditor:
             self.set_mode("player")
         elif event.key == pygame.K_3:
             self.set_mode("enemy")
+        elif event.key == pygame.K_v:
+            self.set_mode("vector")
         elif pygame.K_4 <= event.key <= pygame.K_9:
             self.select_enemy_variant(event.key - pygame.K_4)
         elif event.key in (pygame.K_s, pygame.K_F5) and (event.key == pygame.K_F5 or modifiers & pygame.KMOD_CTRL):
@@ -252,7 +264,12 @@ class LevelEditor:
                 self.mark_dirty("Spawn joueur deplace")
             elif self.mode == "enemy":
                 self.begin_enemy_action(pos)
+            elif self.mode == "vector":
+                self.begin_vector_action(pos)
         elif event.button == 3:
+            if self.mode == "vector":
+                self.reset_vector_at(pos)
+                return
             self.delete_at(pos)
 
     def handle_mouse_motion(self, event: pygame.event.Event, pos: tuple[int, int]) -> None:
@@ -267,6 +284,8 @@ class LevelEditor:
             self.update_resized_platform(pos)
         elif self.drag_action == "move_enemy":
             self.update_moved_enemy(pos)
+        elif self.drag_action == "paint_vector":
+            self.update_vector_cell(pos)
 
     def handle_mouse_up(self, event: pygame.event.Event) -> None:
         if event.button != 1:
@@ -371,6 +390,26 @@ class LevelEditor:
         self.level.enemy_spawns[self.selected_enemy_index] = (x, y, variant)
         self.mark_dirty()
 
+    def begin_vector_action(self, pos: tuple[int, int]) -> None:
+        self.selected_vector_cell = self.level.vector_field.cell_at(pos)
+        self.drag_action = "paint_vector"
+        self.update_vector_cell(pos)
+
+    def update_vector_cell(self, pos: tuple[int, int]) -> None:
+        if self.selected_vector_cell is None:
+            return
+        column, row = self.selected_vector_cell
+        center = self.level.vector_field.cell_center(column, row)
+        direction = pygame.Vector2(pos) - center
+        self.level.vector_field.set_cell_direction(column, row, direction)
+        self.mark_dirty(f"Vecteur {column},{row} modifie")
+
+    def reset_vector_at(self, pos: tuple[int, int]) -> None:
+        column, row = self.level.vector_field.cell_at(pos)
+        self.selected_vector_cell = (column, row)
+        self.level.vector_field.set_cell_direction(column, row, pygame.Vector2(0, -1))
+        self.mark_dirty(f"Vecteur {column},{row} remis vers le haut")
+
     def delete_at(self, pos: tuple[int, int]) -> None:
         enemy_index = self.enemy_at(pos)
         if enemy_index is not None:
@@ -452,6 +491,8 @@ class LevelEditor:
     def draw(self) -> None:
         self.canvas.fill(BACKGROUND_COLOR)
         self.draw_grid()
+        if self.mode == "vector":
+            self.draw_vector_field()
         self.draw_platforms()
         self.draw_spawns()
         self.draw_panel()
@@ -463,6 +504,36 @@ class LevelEditor:
             pygame.draw.line(self.canvas, GRID_COLOR, (x, 0), (x, HEIGHT))
         for y in range(0, HEIGHT, GRID_SIZE):
             pygame.draw.line(self.canvas, GRID_COLOR, (0, y), (WIDTH, y))
+
+    def draw_vector_field(self) -> None:
+        field = self.level.vector_field
+        for column in range(field.columns + 1):
+            x = column * VECTOR_FIELD_CELL_SIZE
+            pygame.draw.line(self.canvas, VECTOR_GRID_COLOR, (x, 0), (x, HEIGHT))
+        for row in range(field.rows + 1):
+            y = row * VECTOR_FIELD_CELL_SIZE
+            pygame.draw.line(self.canvas, VECTOR_GRID_COLOR, (0, y), (WIDTH, y))
+
+        for row in range(field.rows):
+            for column in range(field.columns):
+                center = field.cell_center(column, row)
+                direction = field.vectors[row][column]
+                color = VECTOR_SELECTED_COLOR if self.selected_vector_cell == (column, row) else VECTOR_ARROW_COLOR
+                self.draw_vector_arrow(center, direction, color)
+
+    def draw_vector_arrow(self, center: pygame.Vector2, direction: pygame.Vector2, color: tuple[int, int, int]) -> None:
+        if direction.length_squared() <= 0:
+            return
+
+        direction = direction.normalize()
+        end = center + direction * 12
+        start = center - direction * 5
+        pygame.draw.line(self.canvas, color, start, end, width=2)
+
+        normal = pygame.Vector2(-direction.y, direction.x)
+        head_left = end - direction * 5 + normal * 4
+        head_right = end - direction * 5 - normal * 4
+        pygame.draw.polygon(self.canvas, color, [end, head_left, head_right])
 
     def draw_platforms(self) -> None:
         for index, platform in enumerate(self.level.platforms):
@@ -496,15 +567,15 @@ class LevelEditor:
         panel_rect = pygame.Rect(0, HEIGHT, WIDTH, PANEL_HEIGHT)
         pygame.draw.rect(self.canvas, PANEL_COLOR, panel_rect)
 
-        mode_names = {"platform": "Plateformes", "player": "Joueur", "enemy": "Ennemis"}
+        mode_names = {"platform": "Plateformes", "player": "Joueur", "enemy": "Ennemis", "vector": "Vecteurs"}
         dirty_marker = " *" if self.dirty else ""
         title = f"{self.level.path.name}{dirty_marker} | {mode_names[self.mode]}"
         self.draw_text(title, 12, HEIGHT + 12, TEXT_COLOR, self.font)
 
         controls = [
             "Ctrl+S save  Ctrl+R reload  [ ] lvl",
-            "1 plat  2 player  3 enemies  Del rm",
-            "Select enemy below, left click place",
+            "1 plat  2 player  3 enemies  V vectors",
+            "Vector: drag direction, right click up",
         ]
         for row, text in enumerate(controls):
             self.draw_text(

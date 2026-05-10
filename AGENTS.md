@@ -100,15 +100,18 @@ bubble_dungeon/
 - items / bonus charges depuis `assets/sprites/items/`
 - editeur de niveaux lanceable avec `python editor.py` ou `python main.py --editor`
 - palette d'ennemis dans l'editeur pour choisir la variante a placer
+- edition du champ de vecteurs dans l'editeur via le mode `V`
 - bulles avec dash horizontal rapide, freinage brutal, croissance puis montee
 - capture d'ennemi seulement pendant la phase de deplacement horizontal rapide
 - bulles agrandies avec hitbox coherente avec le visuel
 - bulles bloquees aux bords/plafond quand elles arrivent lentement
-- bulles qui eclatent sur impact rapide contre un bord ou une plateforme
+- champ de vecteurs `32x32` sur toute la surface, initialise vers le haut, pour diriger les bulles idle
+- bulles qui ignorent les plateformes et ne collisionnent plus qu'avec les limites de l'ecran
+- bulles qui eclatent sur impact rapide contre une limite de l'ecran
 - collisions et repulsion legere entre bulles
 - reaction en chaine entre bulles proches quand une bulle eclate
 - joueur capable d'eclater les bulles en sautant vers le haut
-- ennemis captures qui montent dans leur bulle, repoussent les autres bulles et eclatent par reaction en chaine
+- ennemis captures qui suivent le champ de vecteurs dans leur bulle, repoussent les autres bulles et eclatent par reaction en chaine
 - quand la bulle d'un ennemi capture eclate, l'ennemi joue une animation de mort
 - l'ennemi mort part en arc parabolique, reste dans l'aire de jeu, et son animation de mort boucle pendant la trajectoire
 - le bonus d'un ennemi mort apparait seulement quand l'ennemi touche le sol ou une plateforme
@@ -131,11 +134,11 @@ bubble_dungeon/
 - une bulle ne capture pas un ennemi pendant sa montee, seulement si sa vitesse horizontale est encore suffisante
 - la bulle part tres vite horizontalement, parcourt une bonne distance, grossit, freine fort puis monte
 - une bulle lente reste dans la scene au contact des bords ou du plafond
-- une bulle rapide eclate sur impact avec un bord ou une plateforme
+- une bulle rapide eclate sur impact avec une limite de l'ecran
 - les bulles libres et les bulles contenant un ennemi se repoussent legerement
 - si une bulle eclate, les bulles tres proches eclatent aussi
 - le joueur ne peut eclater une bulle que pendant la montee d'un saut
-- une bulle contenant un ennemi continue a monter et peut etre eclatee par une autre bulle proche
+- une bulle contenant un ennemi continue a suivre le champ de vecteurs et peut etre eclatee par une autre bulle proche
 - quand une bulle contenant un ennemi eclate, l'ennemi ne disparait pas instantanement
 - l'ennemi mort garde une impulsion verticale et horizontale, rebondit sur les bords de l'ecran et genere son item a l'atterrissage
 - les sprites d'ennemis sont flippes horizontalement selon leur direction de deplacement
