@@ -30,6 +30,8 @@ GRID_SIZE = 24
 PANEL_HEIGHT = 216
 EDITOR_WIDTH = WIDTH
 EDITOR_HEIGHT = HEIGHT + PANEL_HEIGHT
+EDITOR_MIN_SCALE = 0.5
+EDITOR_WINDOW_MARGIN = 72
 HANDLE_SIZE = 18
 PALETTE_CELL_SIZE = 66
 PALETTE_TOP = HEIGHT + 141
@@ -88,8 +90,13 @@ class LevelEditor:
     def __init__(self) -> None:
         pygame.init()
         pygame.font.init()
-        self.screen = pygame.display.set_mode((EDITOR_WIDTH, EDITOR_HEIGHT))
         self.canvas = pygame.Surface((EDITOR_WIDTH, EDITOR_HEIGHT))
+        self.display_scale = self.get_display_scale()
+        self.window_size = (
+            round(EDITOR_WIDTH * self.display_scale),
+            round(EDITOR_HEIGHT * self.display_scale),
+        )
+        self.screen = pygame.display.set_mode(self.window_size)
         pygame.display.set_caption("Bubble Dungeon - Level Editor")
         self.clock = pygame.time.Clock()
         self.assets = AssetManager()
@@ -116,6 +123,13 @@ class LevelEditor:
         self.save_flash_timer = 0.0
         self.selected_enemy_variant = 0
         self.message = "1 Plateformes  2 Joueur  3 Ennemis  V Vecteurs"
+
+    def get_display_scale(self) -> float:
+        display_info = pygame.display.Info()
+        available_width = max(1, display_info.current_w - EDITOR_WINDOW_MARGIN)
+        available_height = max(1, display_info.current_h - EDITOR_WINDOW_MARGIN)
+        scale = min(1.0, available_width / EDITOR_WIDTH, available_height / EDITOR_HEIGHT)
+        return max(EDITOR_MIN_SCALE, scale)
 
     def run(self) -> int:
         while self.running:
@@ -183,7 +197,12 @@ class LevelEditor:
                 self.handle_mouse_up(event)
 
     def to_editor_pos(self, pos: tuple[int, int]) -> tuple[int, int]:
-        return pos
+        if self.display_scale == 1.0:
+            return pos
+        return (
+            round(pos[0] / self.display_scale),
+            round(pos[1] / self.display_scale),
+        )
 
     def handle_keydown(self, event: pygame.event.Event) -> None:
         modifiers = pygame.key.get_mods()
@@ -496,7 +515,10 @@ class LevelEditor:
         self.draw_platforms()
         self.draw_spawns()
         self.draw_panel()
-        self.screen.blit(self.canvas, (0, 0))
+        if self.display_scale == 1.0:
+            self.screen.blit(self.canvas, (0, 0))
+        else:
+            pygame.transform.smoothscale(self.canvas, self.window_size, self.screen)
         pygame.display.flip()
 
     def draw_grid(self) -> None:
