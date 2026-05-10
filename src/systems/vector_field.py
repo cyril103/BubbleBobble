@@ -14,8 +14,8 @@ class VectorField:
 
     @classmethod
     def upward(cls) -> "VectorField":
-        columns = WIDTH // VECTOR_FIELD_CELL_SIZE
-        rows = HEIGHT // VECTOR_FIELD_CELL_SIZE
+        columns = (WIDTH + VECTOR_FIELD_CELL_SIZE - 1) // VECTOR_FIELD_CELL_SIZE
+        rows = (HEIGHT + VECTOR_FIELD_CELL_SIZE - 1) // VECTOR_FIELD_CELL_SIZE
         default_vector = pygame.Vector2(VECTOR_FIELD_DEFAULT_DIRECTION)
         vectors = [[default_vector.copy() for _column in range(columns)] for _row in range(rows)]
         return cls(VECTOR_FIELD_CELL_SIZE, columns, rows, vectors)
@@ -58,9 +58,13 @@ class VectorField:
         return column, row
 
     def cell_center(self, column: int, row: int) -> pygame.Vector2:
+        left = column * self.cell_size
+        top = row * self.cell_size
+        right = min(left + self.cell_size, WIDTH)
+        bottom = min(top + self.cell_size, HEIGHT)
         return pygame.Vector2(
-            column * self.cell_size + self.cell_size / 2,
-            row * self.cell_size + self.cell_size / 2,
+            (left + right) / 2,
+            (top + bottom) / 2,
         )
 
     def set_cell_direction(self, column: int, row: int, direction: pygame.Vector2) -> None:

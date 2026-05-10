@@ -67,7 +67,7 @@ Controles de l'editeur :
 - clic gauche en mode joueur : placer le spawn du joueur
 - clic sur la palette du bas : selectionner le type d'ennemi a placer
 - clic gauche en mode ennemis : ajouter l'ennemi selectionne ou selectionner un ennemi existant
-- clic gauche + glisser en mode champ de vecteurs : orienter le vecteur de la case `32x32`
+- clic gauche + glisser en mode champ de vecteurs : orienter le vecteur de la case `64x64`
 - clic droit en mode champ de vecteurs : remettre le vecteur de la case vers le haut
 - clic droit sur une plateforme ou un ennemi : supprimer
 
@@ -158,7 +158,7 @@ Sur la page web, cliquer sur `Ready to start !`, puis appuyer sur `Entree` pour 
 - les bulles proches se repoussent legerement
 - si une bulle eclate, les bulles tres proches eclatent aussi
 - le joueur peut eclater une bulle en la touchant pendant la montee d'un saut
-- une bulle idle suit un champ de vecteurs de cases `32x32`, actuellement initialise vers le haut sur toute la surface
+- une bulle idle suit un champ de vecteurs de cases `64x64`, actuellement initialise vers le haut sur toute la surface
 - une bulle contenant un ennemi suit aussi ce champ, repousse les autres bulles et peut eclater par reaction en chaine
 - quand une bulle contenant un ennemi eclate, l'ennemi ne disparait pas instantanement
 - l'ennemi mort part en arc, rebondit contre les bords de l'ecran si besoin, puis genere son bonus a l'atterrissage

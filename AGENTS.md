@@ -105,7 +105,7 @@ bubble_dungeon/
 - capture d'ennemi seulement pendant la phase de deplacement horizontal rapide
 - bulles agrandies avec hitbox coherente avec le visuel
 - bulles bloquees aux bords/plafond quand elles arrivent lentement
-- champ de vecteurs `32x32` sur toute la surface, initialise vers le haut, pour diriger les bulles idle
+- champ de vecteurs `64x64` sur toute la surface, initialise vers le haut, pour diriger les bulles idle
 - bulles qui ignorent les plateformes et ne collisionnent plus qu'avec les limites de l'ecran
 - bulles qui eclatent sur impact rapide contre une limite de l'ecran
 - collisions et repulsion legere entre bulles

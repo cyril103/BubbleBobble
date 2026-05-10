@@ -508,10 +508,10 @@ class LevelEditor:
     def draw_vector_field(self) -> None:
         field = self.level.vector_field
         for column in range(field.columns + 1):
-            x = column * VECTOR_FIELD_CELL_SIZE
+            x = min(column * VECTOR_FIELD_CELL_SIZE, WIDTH)
             pygame.draw.line(self.canvas, VECTOR_GRID_COLOR, (x, 0), (x, HEIGHT))
         for row in range(field.rows + 1):
-            y = row * VECTOR_FIELD_CELL_SIZE
+            y = min(row * VECTOR_FIELD_CELL_SIZE, HEIGHT)
             pygame.draw.line(self.canvas, VECTOR_GRID_COLOR, (0, y), (WIDTH, y))
 
         for row in range(field.rows):
