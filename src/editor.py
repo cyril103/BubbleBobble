@@ -21,18 +21,16 @@ from src.settings import (
     PLAYER_HEIGHT,
     PLAYER_WIDTH,
     WIDTH,
-    WINDOW_SCALE,
-    scale_px,
 )
 
 
-GRID_SIZE = scale_px(8)
-PANEL_HEIGHT = scale_px(72)
+GRID_SIZE = 24
+PANEL_HEIGHT = 216
 EDITOR_WIDTH = WIDTH
 EDITOR_HEIGHT = HEIGHT + PANEL_HEIGHT
-HANDLE_SIZE = scale_px(6)
-PALETTE_CELL_SIZE = scale_px(22)
-PALETTE_TOP = HEIGHT + scale_px(47)
+HANDLE_SIZE = 18
+PALETTE_CELL_SIZE = 66
+PALETTE_TOP = HEIGHT + 141
 
 GRID_COLOR = (42, 47, 62)
 TEXT_COLOR = (240, 244, 248)
@@ -82,14 +80,14 @@ class LevelEditor:
     def __init__(self) -> None:
         pygame.init()
         pygame.font.init()
-        self.screen = pygame.display.set_mode((EDITOR_WIDTH * WINDOW_SCALE, EDITOR_HEIGHT * WINDOW_SCALE))
+        self.screen = pygame.display.set_mode((EDITOR_WIDTH, EDITOR_HEIGHT))
         self.canvas = pygame.Surface((EDITOR_WIDTH, EDITOR_HEIGHT))
         pygame.display.set_caption("Bubble Dungeon - Level Editor")
         self.clock = pygame.time.Clock()
         self.assets = AssetManager()
         self.camera = Camera()
-        self.font = self.assets._load_font(scale_px(5), fallback_size=scale_px(8))
-        self.small_font = self.assets._load_font(scale_px(4), fallback_size=scale_px(7))
+        self.font = self.assets._load_font(15, fallback_size=24)
+        self.small_font = self.assets._load_font(12, fallback_size=21)
 
         self.level_paths = discover_level_paths(LEVELS_DIR)
         if not self.level_paths:
@@ -175,7 +173,7 @@ class LevelEditor:
                 self.handle_mouse_up(event)
 
     def to_editor_pos(self, pos: tuple[int, int]) -> tuple[int, int]:
-        return (pos[0] // WINDOW_SCALE, pos[1] // WINDOW_SCALE)
+        return pos
 
     def handle_keydown(self, event: pygame.event.Event) -> None:
         modifiers = pygame.key.get_mods()
@@ -402,7 +400,7 @@ class LevelEditor:
 
     def enemy_palette_rect(self, variant: int) -> pygame.Rect:
         return pygame.Rect(
-            scale_px(4) + variant * (PALETTE_CELL_SIZE + scale_px(2)),
+            12 + variant * (PALETTE_CELL_SIZE + 6),
             PALETTE_TOP,
             PALETTE_CELL_SIZE,
             PALETTE_CELL_SIZE,
@@ -457,7 +455,7 @@ class LevelEditor:
         self.draw_platforms()
         self.draw_spawns()
         self.draw_panel()
-        pygame.transform.scale(self.canvas, self.screen.get_size(), self.screen)
+        self.screen.blit(self.canvas, (0, 0))
         pygame.display.flip()
 
     def draw_grid(self) -> None:
@@ -468,9 +466,9 @@ class LevelEditor:
 
     def draw_platforms(self) -> None:
         for index, platform in enumerate(self.level.platforms):
-            pygame.draw.rect(self.canvas, PLATFORM_COLOR, platform, border_radius=scale_px(2))
+            pygame.draw.rect(self.canvas, PLATFORM_COLOR, platform, border_radius=6)
             if index == self.selected_platform_index:
-                pygame.draw.rect(self.canvas, SELECTED_COLOR, platform, width=scale_px(1), border_radius=scale_px(2))
+                pygame.draw.rect(self.canvas, SELECTED_COLOR, platform, width=3, border_radius=6)
                 handle = pygame.Rect(0, 0, HANDLE_SIZE, HANDLE_SIZE)
                 handle.bottomright = platform.bottomright
                 pygame.draw.rect(self.canvas, SELECTED_COLOR, handle)
@@ -478,7 +476,7 @@ class LevelEditor:
     def draw_spawns(self) -> None:
         player = Player(*self.level.player_spawn)
         player.draw(self.canvas, self.camera, self.assets, invulnerable=False)
-        pygame.draw.rect(self.canvas, PLAYER_MARKER_COLOR, player.rect, width=scale_px(1), border_radius=scale_px(2))
+        pygame.draw.rect(self.canvas, PLAYER_MARKER_COLOR, player.rect, width=3, border_radius=6)
         self.draw_label("P", player.rect.midtop, PLAYER_MARKER_COLOR)
 
         for index, (x, y, variant) in enumerate(self.level.enemy_spawns):
@@ -486,12 +484,12 @@ class LevelEditor:
             enemy.draw(self.canvas, self.camera, self.assets)
             rect = pygame.Rect(x, y, ENEMY_WIDTH, ENEMY_HEIGHT)
             outline_color = SELECTED_COLOR if index == self.selected_enemy_index else ENEMY_MARKER_COLOR
-            pygame.draw.rect(self.canvas, outline_color, rect, width=scale_px(1), border_radius=scale_px(2))
+            pygame.draw.rect(self.canvas, outline_color, rect, width=3, border_radius=6)
             self.draw_label(str(index + 1), rect.midtop, outline_color)
 
     def draw_label(self, text: str, midbottom: tuple[int, int], color: tuple[int, int, int]) -> None:
         label = self.small_font.render(text, False, color)
-        rect = label.get_rect(midbottom=(midbottom[0], midbottom[1] - scale_px(2)))
+        rect = label.get_rect(midbottom=(midbottom[0], midbottom[1] - 6))
         self.canvas.blit(label, rect)
 
     def draw_panel(self) -> None:
@@ -501,7 +499,7 @@ class LevelEditor:
         mode_names = {"platform": "Plateformes", "player": "Joueur", "enemy": "Ennemis"}
         dirty_marker = " *" if self.dirty else ""
         title = f"{self.level.path.name}{dirty_marker} | {mode_names[self.mode]}"
-        self.draw_text(title, scale_px(4), HEIGHT + scale_px(4), TEXT_COLOR, self.font)
+        self.draw_text(title, 12, HEIGHT + 12, TEXT_COLOR, self.font)
 
         controls = [
             "Ctrl+S save  Ctrl+R reload  [ ] lvl",
@@ -511,8 +509,8 @@ class LevelEditor:
         for row, text in enumerate(controls):
             self.draw_text(
                 text,
-                scale_px(4),
-                HEIGHT + scale_px(17) + row * scale_px(10),
+                12,
+                HEIGHT + 51 + row * 30,
                 MUTED_TEXT_COLOR,
                 self.small_font,
             )
@@ -520,8 +518,8 @@ class LevelEditor:
         status_color = SAVE_FLASH_COLOR if self.save_flash_timer > 0 else TEXT_COLOR
         self.draw_text(
             self.message[:25],
-            WIDTH - scale_px(4),
-            HEIGHT + scale_px(37),
+            WIDTH - 12,
+            HEIGHT + 111,
             status_color,
             self.small_font,
             align_right=True,
@@ -533,8 +531,8 @@ class LevelEditor:
             rect = self.enemy_palette_rect(variant)
             is_selected = variant == self.selected_enemy_variant
             border_color = SELECTED_COLOR if is_selected else MUTED_TEXT_COLOR
-            pygame.draw.rect(self.canvas, (28, 32, 44), rect, border_radius=scale_px(2))
-            pygame.draw.rect(self.canvas, border_color, rect, width=scale_px(1), border_radius=scale_px(2))
+            pygame.draw.rect(self.canvas, (28, 32, 44), rect, border_radius=6)
+            pygame.draw.rect(self.canvas, border_color, rect, width=3, border_radius=6)
 
             enemy_rect = pygame.Rect(0, 0, ENEMY_WIDTH, ENEMY_HEIGHT)
             enemy_rect.center = rect.center
@@ -542,7 +540,7 @@ class LevelEditor:
             enemy.draw(self.canvas, self.camera, self.assets)
 
             label = self.small_font.render(str(variant + 1), False, border_color)
-            self.canvas.blit(label, (rect.x + scale_px(1), rect.y + scale_px(1)))
+            self.canvas.blit(label, (rect.x + 3, rect.y + 3))
 
     def draw_text(
         self,

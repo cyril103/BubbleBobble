@@ -4,25 +4,21 @@ Prototype 2D en Python et Pygame inspire des arcade-platformers fixes.
 
 ## Resolution et assets
 
-Le jeu utilise une resolution native retro de `672x768`, soit 3 fois la base historique `224x256`.
+Le jeu utilise directement une resolution native retro de `672x768`, soit `224 * 3` par `256 * 3`.
 
-`NATIVE_RESOLUTION_SCALE` dans `src/settings.py` centralise cette mise a l'echelle. `WINDOW_SCALE` vaut `1` par defaut afin de conserver une fenetre raisonnable de `672x768`.
+Les constantes `WIDTH`, `HEIGHT`, `WINDOW_WIDTH` et `WINDOW_HEIGHT` dans `src/settings.py` sont exprimees directement dans cette resolution native.
 
 Les sprites actifs viennent de plusieurs sources :
 
 ```text
-assets/sprites/sprites.png
 assets/sprites/player_animations/
 assets/sprites/bobbles_animations/
 assets/sprites/zen_chan/
 assets/sprites/mighta/
+assets/sprites/items/
 ```
 
-`sprites.png` reste utilisee comme source historique et fallback pour plusieurs elements :
-
-- items / bonus
-- variantes ennemies qui n'ont pas encore de dossier dedie
-- sprites de fallback si un dossier d'animation manque
+`sprites.png` n'est plus utilisee par le projet et peut etre supprimee une fois les assets dedies verifies.
 
 Les dossiers dedies contiennent les animations actives suivantes :
 
@@ -30,6 +26,7 @@ Les dossiers dedies contiennent les animations actives suivantes :
 - `bobbles_animations/` : tir de bulle, bulle idle et explosion de bulle
 - `zen_chan/` : marche, capture et mort de Zen-Chan
 - `mighta/` : marche, capture et mort de Mighta
+- `items/` : bonus collectables, avec le score lu depuis le chiffre final du nom de fichier
 
 ## Lancer le jeu en local
 

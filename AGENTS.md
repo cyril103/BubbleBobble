@@ -72,8 +72,7 @@ bubble_dungeon/
 ## Fonctionnalites deja implementees
 
 - fenetre Pygame et boucle de jeu
-- resolution native retro `672x768` (3x la base historique `224x256`)
-- fenetre a l'echelle `WINDOW_SCALE` dans `src/settings.py` (valeur par defaut `1`)
+- resolution native retro directe `672x768` (`224 * 3` par `256 * 3`)
 - classe `Game`
 - chargement des niveaux JSON
 - joueur avec deplacement, saut, gravite et collisions simples
@@ -93,13 +92,12 @@ bubble_dungeon/
 - transition verticale automatique entre niveaux
 - fin de campagne et game over
 - HUD arcade avec police `assets/fonts/emulogic.ttf`
-- sprites historiques et fallbacks charges depuis `assets/sprites/sprites.png`
 - sprites joueur charges depuis `assets/sprites/player_animations/`
 - animation de mort du joueur depuis `assets/sprites/player_animations/death*.png`
 - animations de bulles et eclatement depuis `assets/sprites/bobbles_animations/`
 - Zen-Chan charge depuis `assets/sprites/zen_chan/` sur la variante ennemie `0`
 - Mighta charge depuis `assets/sprites/mighta/` sur la variante ennemie `1`
-- items / bonus encore charges depuis la spritesheet
+- items / bonus charges depuis `assets/sprites/items/`
 - editeur de niveaux lanceable avec `python editor.py` ou `python main.py --editor`
 - palette d'ennemis dans l'editeur pour choisir la variante a placer
 - bulles avec dash horizontal rapide, freinage brutal, croissance puis montee
@@ -119,7 +117,7 @@ bubble_dungeon/
 
 - le jeu se lance avec `python main.py`
 - l'editeur se lance avec `python editor.py`
-- la logique de jeu native reste en `672x768`; `NATIVE_RESOLUTION_SCALE` convertit la base historique `224x256`, et la taille de fenetre depend de `WINDOW_SCALE`
+- la logique de jeu native reste en `672x768`, avec les constantes exprimees directement dans cette resolution
 - pendant `READY`, les entites tombent sous gravite, mais le joueur ne peut pas bouger
 - quand le joueur perd une vie, le niveau ne redemarre pas entierement
 - le joueur reapparait au point de depart du niveau avec invulnerabilite
@@ -159,7 +157,6 @@ bubble_dungeon/
 - ajouter plus tard un point d'attraction des bulles dans les niveaux
 - ajouter des power-ups jouables a partir des icones deja presentes
 - enrichir les niveaux et leur rythme
-- continuer a verifier les decoupes exactes dans `assets/sprites/sprites.png` quand une animation fallback semble decalee
 - continuer a completer les dossiers dedies pour les variantes ennemies restantes
 - ajouter sons et musique originaux
 - ameliorer les animations

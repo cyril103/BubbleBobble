@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pygame
 
-from src.settings import POP_EFFECT_DURATION, scale_px
+from src.settings import POP_EFFECT_DURATION
 
 
 @dataclass
@@ -17,9 +17,9 @@ class Particle:
 
     def draw(self, surface: pygame.Surface, camera, assets) -> None:
         sprite = assets.get_pop_frame(self.age, self.lifetime)
-        rect = pygame.Rect(0, 0, scale_px(24), scale_px(24))
+        rect = pygame.Rect(0, 0, 72, 72)
         rect.center = (round(self.center.x), round(self.center.y))
         screen_rect = camera.apply_rect(rect)
         if assets.draw_scaled(surface, sprite, screen_rect):
             return
-        pygame.draw.circle(surface, (180, 220, 255), screen_rect.center, scale_px(8), width=scale_px(2))
+        pygame.draw.circle(surface, (180, 220, 255), screen_rect.center, 24, width=6)

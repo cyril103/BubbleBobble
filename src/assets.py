@@ -1,113 +1,11 @@
+from dataclasses import dataclass
 from pathlib import Path
+import re
 
 import pygame
 
-from src.settings import ASSETS_DIR, ENEMY_DEATH_FRAME_DURATION, ENEMY_HEIGHT, PLAYER_HEIGHT, scale_px
+from src.settings import ASSETS_DIR, ENEMY_DEATH_FRAME_DURATION, ENEMY_HEIGHT, PLAYER_HEIGHT
 
-
-SPRITE_LAYOUT = {
-    "player": [
-        (6, 16, 16, 16),
-        (27, 16, 16, 16),
-        (48, 16, 16, 16),
-        (70, 16, 15, 16),
-    ],
-    "bubble_attack": [
-        (7, 1050, 14, 16),
-        (25, 1050, 14, 16),
-        (7, 1072, 14, 16),
-        (25, 1072, 14, 16),
-    ],
-    "player_death": [
-        (6, 89, 13, 16),
-        (26, 89, 15, 16),
-        (46, 89, 15, 16),
-        (65, 89, 14, 16),
-        (85, 89, 14, 16),
-        (104, 89, 14, 16),
-        (123, 89, 14, 16),
-        (145, 89, 14, 16),
-        (169, 89, 14, 16),
-        (194, 89, 14, 16),
-        (230, 92, 14, 13),
-        (249, 96, 14, 9),
-        (266, 98, 14, 7),
-    ],
-    "enemy_red": [
-        (24, 245, 15, 16),
-        (62, 245, 16, 16),
-    ],
-    "enemy_yellow": [
-        (5, 278, 16, 16),
-        (24, 278, 16, 16),
-    ],
-    "enemy_purple": [
-        (6, 333, 16, 15),
-        (27, 333, 16, 15),
-    ],
-    "enemy_blue": [
-        (6, 363, 16, 16),
-        (26, 363, 16, 16),
-    ],
-    "enemy_ghost": [
-        (6, 425, 16, 16),
-        (27, 425, 16, 16),
-    ],
-    "enemy_orange": [
-        (9, 507, 15, 16),
-        (28, 507, 15, 16),
-    ],
-    "trapped_red": [
-        (283, 245, 16, 16),
-        (303, 245, 16, 16),
-        (321, 245, 16, 16),
-    ],
-    "trapped_yellow": [
-        (215, 278, 16, 16),
-        (236, 278, 16, 16),
-        (256, 278, 16, 16),
-    ],
-    "trapped_purple": [
-        (245, 333, 16, 15),
-        (268, 333, 14, 16),
-        (286, 333, 14, 16),
-    ],
-    "trapped_blue": [
-        (286, 363, 16, 15),
-        (306, 363, 15, 16),
-        (326, 363, 14, 16),
-    ],
-    "trapped_ghost": [
-        (217, 425, 14, 16),
-        (235, 425, 14, 16),
-        (253, 425, 14, 16),
-    ],
-    "trapped_orange": [
-        (87, 529, 14, 16),
-        (105, 529, 14, 16),
-        (123, 529, 14, 16),
-    ],
-    "pop": [
-        (29, 1188, 8, 10),
-        (42, 1187, 10, 12),
-        (57, 1186, 12, 14),
-        (74, 1185, 14, 16),
-    ],
-    "powerups": [
-        (501, 975, 11, 14),
-        (515, 975, 11, 14),
-        (529, 975, 11, 14),
-        (543, 975, 11, 14),
-    ],
-    "fruit_bonus": [
-        (8, 806, 15, 16),
-        (27, 804, 14, 18),
-        (47, 803, 13, 19),
-        (66, 803, 15, 19),
-        (86, 804, 16, 18),
-        (209, 803, 16, 19),
-    ],
-}
 
 ENEMY_VARIANTS = (
     "enemy_red",
@@ -128,60 +26,37 @@ TRAPPED_VARIANTS = (
 )
 
 
+@dataclass(frozen=True)
+class CollectableItem:
+    name: str
+    score: int
+    frame: pygame.Surface
+
+
 class AssetManager:
     def __init__(self) -> None:
         self.font_path = ASSETS_DIR / "fonts" / "emulogic.ttf"
-        self.hud_font = self._load_font(scale_px(5), fallback_size=scale_px(8))
-        self.title_font = self._load_font(scale_px(10), fallback_size=scale_px(16))
-        self.overlay_font = self._load_font(scale_px(6), fallback_size=scale_px(9))
+        self.hud_font = self._load_font(15, fallback_size=24)
+        self.title_font = self._load_font(30, fallback_size=48)
+        self.overlay_font = self._load_font(18, fallback_size=27)
 
-        self.sprite_sheet_path = self._find_sprite_sheet()
-        self.sprite_sheet = self._load_sprite_sheet(self.sprite_sheet_path)
-        self.player_frames = self._load_sequence("player")
         self.player_animation_frames = self._load_player_animation_frames()
-        self.player_death_frames = self._load_player_death_frames() or self._load_sequence("player_death")
-        self.bubble_frames = self._load_sequence("bubble_attack")
+        self.player_death_frames = self._load_player_death_frames()
         self.bubble_animation_frames = self._load_bubble_animation_frames()
-        self.enemy_frames = {name: self._load_sequence(name) for name in ENEMY_VARIANTS}
-        self.trapped_frames = {name: self._load_sequence(name) for name in TRAPPED_VARIANTS}
+        self.enemy_frames: dict[str, list[pygame.Surface]] = {}
+        self.trapped_frames: dict[str, list[pygame.Surface]] = {}
         self.zen_chan_frames = self._load_zen_chan_frames()
         self.mighta_frames = self._load_mighta_frames()
-        self.pop_frames = self._load_bubble_pop_frames() or self._load_sequence("pop")
-        self.fruit_bonus_frames = self._load_sequence("fruit_bonus")
-        self.powerup_frames = self._load_sequence("powerups")
+        self.pop_frames = self._load_bubble_pop_frames()
+        self.collectable_items = self._load_collectable_items()
+        self.collectable_frames = [item.frame for item in self.collectable_items]
 
     def _load_font(self, size: int, fallback_size: int) -> pygame.font.Font:
         if self.font_path.exists():
             return pygame.font.Font(self.font_path, size)
         return pygame.font.SysFont("consolas", fallback_size)
 
-    def _find_sprite_sheet(self) -> Path | None:
-        sprites_dir = ASSETS_DIR / "sprites"
-        preferred_sheet = sprites_dir / "sprites.png"
-        if preferred_sheet.exists():
-            return preferred_sheet
-
-        candidates = [path for path in sprites_dir.glob("*.png") if not path.name.startswith("_")]
-        if not candidates:
-            return None
-        return max(candidates, key=lambda path: path.stat().st_mtime)
-
-    def _load_sprite_sheet(self, path: Path | None) -> pygame.Surface | None:
-        if path is None:
-            return None
-        return pygame.image.load(path).convert_alpha()
-
-    def _crop_sprite(self, rect: tuple[int, int, int, int]) -> pygame.Surface | None:
-        if self.sprite_sheet is None:
-            return None
-
-        x, y, width, height = rect
-        surface = pygame.Surface((width, height), pygame.SRCALPHA)
-        surface.blit(self.sprite_sheet, (0, 0), pygame.Rect(x, y, width, height))
-        self._clear_connected_background(surface)
-        return surface
-
-    def _is_sheet_background_pixel(self, color: pygame.Color) -> bool:
+    def _is_connected_background_pixel(self, color: pygame.Color) -> bool:
         if color.a <= 8:
             return True
 
@@ -207,7 +82,7 @@ class AssetManager:
                 continue
             visited.add((x, y))
 
-            if not self._is_sheet_background_pixel(surface.get_at((x, y))):
+            if not self._is_connected_background_pixel(surface.get_at((x, y))):
                 continue
 
             surface.set_at((x, y), (0, 0, 0, 0))
@@ -221,13 +96,20 @@ class AssetManager:
             if y < height - 1:
                 stack.append((x, y + 1))
 
-    def _load_sequence(self, name: str) -> list[pygame.Surface]:
-        frames: list[pygame.Surface] = []
-        for rect in SPRITE_LAYOUT.get(name, []):
-            sprite = self._crop_sprite(rect)
-            if sprite is not None:
-                frames.append(sprite)
-        return frames
+    def _load_collectable_items(self) -> list[CollectableItem]:
+        items_dir = ASSETS_DIR / "sprites" / "items"
+        items: list[CollectableItem] = []
+
+        for path in sorted(items_dir.glob("*.png")):
+            match = re.search(r"_(\d+)$", path.stem)
+            if match is None:
+                continue
+
+            frame = pygame.image.load(path).convert_alpha()
+            self._clear_connected_background(frame)
+            items.append(CollectableItem(path.stem[: match.start()], int(match.group(1)), frame))
+
+        return sorted(items, key=lambda item: item.score)
 
     def _load_player_animation_frames(self) -> dict[str, list[pygame.Surface]]:
         animation_dir = ASSETS_DIR / "sprites" / "player_animations"
@@ -397,18 +279,7 @@ class AssetManager:
                 return pygame.transform.flip(frame, True, False)
             return frame
 
-        if not self.player_frames:
-            return None
-
-        if state == "walk":
-            index = (pygame.time.get_ticks() // 140) % len(self.player_frames)
-        else:
-            index = 0
-
-        frame = self.player_frames[index]
-        if facing > 0:
-            return pygame.transform.flip(frame, True, False)
-        return frame
+        return None
 
     def get_player_death_frame(self, progress: float, facing: int) -> pygame.Surface | None:
         if not self.player_death_frames:
@@ -436,15 +307,7 @@ class AssetManager:
             index = (pygame.time.get_ticks() // 160) % len(frames)
             return frames[index]
 
-        if not self.bubble_frames:
-            return None
-
-        if len(self.bubble_frames) == 1:
-            return self.bubble_frames[0]
-
-        progress = min(0.999, max(0.0, growth_progress))
-        index = int(progress * len(self.bubble_frames))
-        return self.bubble_frames[index]
+        return None
 
     def get_enemy_frame(self, variant: int, trapped: bool, facing: int = -1) -> pygame.Surface | None:
         if variant in (0, 1):
@@ -495,9 +358,15 @@ class AssetManager:
         return self.get_enemy_frame(variant, trapped=False, facing=facing)
 
     def get_collectable_frame(self, variant: int) -> pygame.Surface | None:
-        if not self.fruit_bonus_frames:
+        if not self.collectable_frames:
             return None
-        return self.fruit_bonus_frames[variant % len(self.fruit_bonus_frames)]
+        return self.collectable_frames[variant % len(self.collectable_frames)]
+
+    def get_collectable_score(self, variant: int) -> int:
+        if not self.collectable_items:
+            return 0
+        item = self.collectable_items[variant % len(self.collectable_items)]
+        return item.score
 
     def get_pop_frame(self, age: float, lifetime: float) -> pygame.Surface | None:
         if not self.pop_frames:
