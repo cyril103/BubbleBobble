@@ -27,14 +27,15 @@ from src.systems.vector_field import VectorField
 
 
 GRID_SIZE = 24
-PANEL_HEIGHT = 216
-EDITOR_WIDTH = WIDTH
-EDITOR_HEIGHT = HEIGHT + PANEL_HEIGHT
+PANEL_WIDTH = 384
+EDITOR_WIDTH = WIDTH + PANEL_WIDTH
+EDITOR_HEIGHT = HEIGHT
 EDITOR_MIN_SCALE = 0.5
 EDITOR_WINDOW_MARGIN = 72
 HANDLE_SIZE = 18
 PALETTE_CELL_SIZE = 66
-PALETTE_TOP = HEIGHT + 141
+PALETTE_LEFT = WIDTH + 12
+PALETTE_TOP = 364
 
 GRID_COLOR = (42, 47, 62)
 TEXT_COLOR = (240, 244, 248)
@@ -269,7 +270,7 @@ class LevelEditor:
             self.mark_dirty()
 
     def handle_mouse_down(self, event: pygame.event.Event, pos: tuple[int, int]) -> None:
-        if pos[1] >= HEIGHT:
+        if pos[0] >= WIDTH:
             if event.button == 1:
                 self.select_enemy_variant_at(pos)
             return
@@ -457,9 +458,12 @@ class LevelEditor:
         return None
 
     def enemy_palette_rect(self, variant: int) -> pygame.Rect:
+        columns = 3
+        column = variant % columns
+        row = variant // columns
         return pygame.Rect(
-            12 + variant * (PALETTE_CELL_SIZE + 6),
-            PALETTE_TOP,
+            PALETTE_LEFT + column * (PALETTE_CELL_SIZE + 6),
+            PALETTE_TOP + row * (PALETTE_CELL_SIZE + 6),
             PALETTE_CELL_SIZE,
             PALETTE_CELL_SIZE,
         )
@@ -586,37 +590,43 @@ class LevelEditor:
         self.canvas.blit(label, rect)
 
     def draw_panel(self) -> None:
-        panel_rect = pygame.Rect(0, HEIGHT, WIDTH, PANEL_HEIGHT)
+        panel_rect = pygame.Rect(WIDTH, 0, PANEL_WIDTH, HEIGHT)
         pygame.draw.rect(self.canvas, PANEL_COLOR, panel_rect)
 
         mode_names = {"platform": "Plateformes", "player": "Joueur", "enemy": "Ennemis", "vector": "Vecteurs"}
         dirty_marker = " *" if self.dirty else ""
-        title = f"{self.level.path.name}{dirty_marker} | {mode_names[self.mode]}"
-        self.draw_text(title, 12, HEIGHT + 12, TEXT_COLOR, self.font)
+        self.draw_text(self.level.path.name + dirty_marker, WIDTH + 12, 14, TEXT_COLOR, self.font)
+        self.draw_text(mode_names[self.mode], WIDTH + 12, 48, SELECTED_COLOR, self.font)
 
         controls = [
-            "Ctrl+S save  Ctrl+R reload  [ ] lvl",
-            "1 plat  2 player  3 enemies  V vectors",
-            "Vector: drag direction, right click up",
+            "Ctrl+S save",
+            "Ctrl+R reload",
+            "[ ] niveau",
+            "1 plateformes",
+            "2 joueur",
+            "3 ennemis",
+            "V vecteurs",
+            "Vecteur: glisser",
+            "Clic droit: haut",
         ]
         for row, text in enumerate(controls):
             self.draw_text(
                 text,
-                12,
-                HEIGHT + 51 + row * 30,
+                WIDTH + 12,
+                92 + row * 24,
                 MUTED_TEXT_COLOR,
                 self.small_font,
             )
 
         status_color = SAVE_FLASH_COLOR if self.save_flash_timer > 0 else TEXT_COLOR
         self.draw_text(
-            self.message[:25],
-            WIDTH - 12,
-            HEIGHT + 111,
+            self.message[:26],
+            WIDTH + 12,
+            710,
             status_color,
             self.small_font,
-            align_right=True,
         )
+        self.draw_text("Ennemis", WIDTH + 12, 332, TEXT_COLOR, self.small_font)
         self.draw_enemy_palette()
 
     def draw_enemy_palette(self) -> None:
