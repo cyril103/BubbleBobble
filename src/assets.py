@@ -39,6 +39,9 @@ class AssetManager:
         self.hud_font = self._load_font(15, fallback_size=24)
         self.title_font = self._load_font(30, fallback_size=48)
         self.overlay_font = self._load_font(18, fallback_size=27)
+        self.score_font = self._load_font(30, fallback_size=45)
+
+
 
         self.player_animation_frames = self._load_player_animation_frames()
         self.player_death_frames = self._load_player_death_frames()

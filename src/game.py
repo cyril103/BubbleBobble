@@ -7,6 +7,7 @@ from src.entities.collectable import Collectable
 from src.entities.enemy import Enemy
 from src.entities.particle import Particle
 from src.entities.player import Player
+from src.entities.score_popup import ScorePopup
 from src.level import Level, discover_level_paths
 from src.settings import (
     BACKGROUND_COLOR,
@@ -58,6 +59,7 @@ class Game:
         self.collectables: list[Collectable] = []
         self.enemies: list[Enemy] = []
         self.particles: list[Particle] = []
+        self.score_popups: list[ScorePopup] = []
         self.state = GameState.TITLE
         self.score = 0
         self.lives = STARTING_LIVES
@@ -92,6 +94,7 @@ class Game:
         self.collectables = []
         self.enemies = [Enemy(x, y, variant) for x, y, variant in self.level.enemy_spawns]
         self.particles = []
+        self.score_popups = []
         self._resolve_spawn_collisions()
         self.spawn_invulnerability_timer = SPAWN_INVULNERABILITY_DURATION
         self.ready_timer = READY_DURATION
@@ -182,6 +185,9 @@ class Game:
         self.collectables.append(
             Collectable(center[0] - size / 2, center[1] - size / 2, variant, score, launch_direction=launch_direction)
         )
+
+    def spawn_score_popup(self, x: float, y: float, text: str) -> None:
+        self.score_popups.append(ScorePopup(x, y, text))
 
     def defeat_enemy(self, enemy: Enemy, launch_origin_x: float | None = None) -> None:
         if enemy.dying:
@@ -371,6 +377,7 @@ class Game:
             self.collectables,
             self.enemies,
             self.particles,
+            [],
             self.score,
             self.lives,
             self.level.name,
@@ -389,6 +396,7 @@ class Game:
             [],
             [],
             next_enemies,
+            [],
             [],
             self.score,
             self.lives,
@@ -442,6 +450,7 @@ class Game:
             if collectable.pickup_delay <= 0 and collectable.rect.colliderect(self.player.rect):
                 self.score += collectable.score
                 self.message = f"Bonus ramasse: +{collectable.score}"
+                self.spawn_score_popup(collectable.rect.centerx, collectable.rect.top, f"+{collectable.score}")
                 continue
             active_collectables.append(collectable)
 
@@ -450,10 +459,14 @@ class Game:
     def update_particles(self, dt: float) -> None:
         self.particles = [particle for particle in self.particles if particle.update(dt)]
 
+    def update_score_popups(self, dt: float) -> None:
+        self.score_popups = [popup for popup in self.score_popups if popup.update(dt)]
+
     def update_dying(self, dt: float) -> None:
         self.death_timer = max(0.0, self.death_timer - dt)
         self.player.settle(dt, self.level.platforms)
         self.update_particles(dt)
+        self.update_score_popups(dt)
         if self.death_timer > 0:
             return
 
@@ -493,6 +506,7 @@ class Game:
             enemy.settle(dt, self.level.platforms)
         self.update_collectables(dt)
         self.update_particles(dt)
+        self.update_score_popups(dt)
 
     def update(self, dt: float) -> None:
         if self.state == GameState.TITLE:
@@ -526,6 +540,7 @@ class Game:
         self.update_enemies(dt)
         self.update_collectables(dt)
         self.update_particles(dt)
+        self.update_score_popups(dt)
         self.update_level_end_timer(dt)
 
     def render_scene_to(
@@ -537,6 +552,7 @@ class Game:
         collectables: list[Collectable],
         enemies: list[Enemy],
         particles: list[Particle],
+        score_popups: list[ScorePopup],
         score: int,
         lives: int,
         level_name: str,
@@ -565,6 +581,10 @@ class Game:
 
         if draw_player:
             player.draw(surface, self.camera, self.assets, invulnerable=player_invulnerable)
+
+        for score_popup in score_popups:
+            score_popup.draw(surface, self.camera, self.assets)
+
         draw_hud(surface, self.assets.hud_font, score, lives, level_name, message)
 
     def draw_transition(self) -> None:
@@ -603,6 +623,7 @@ class Game:
             self.collectables,
             self.enemies,
             self.particles,
+            self.score_popups,
             self.score,
             self.lives,
             self.level.name,
